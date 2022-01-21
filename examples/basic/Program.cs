@@ -1,4 +1,5 @@
-﻿using QRCoder;
+﻿using Newtonsoft.Json;
+using QRCoder;
 
 internal class Program
 {
@@ -14,7 +15,11 @@ internal class Program
 
         WPPConnect.WPPConnect wppConnect = new WPPConnect.WPPConnect(wppConnectConfig);
 
-        WPPConnect.Models.Session session = await wppConnect.CreateSession("Teste");
+        string token = File.ReadAllText(@"C:\Users\Rener\Desktop\Teste.json");
+
+        WPPConnect.Models.Token tokenObj = JsonConvert.DeserializeObject<WPPConnect.Models.Token>(token);
+
+        WPPConnect.Models.Session session = await wppConnect.CreateSession("Teste", tokenObj);
 
         wppConnect.OnAuthLogout += WppConnect_OnAuthLogout;
         wppConnect.OnAuthChange += WppConnect_OnAuthChange;
