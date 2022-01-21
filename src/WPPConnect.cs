@@ -385,7 +385,7 @@ namespace WPPConnect
                     {
                         Console.WriteLine($"[{connection.Client.SessionName}:qrcode] {session.Mensagem}");
 
-                        QRCodeData qrCodeData = new QRCodeGenerator().CreateQrCode(session.Mensagem, QRCodeGenerator.ECCLevel.Q);
+                        QRCodeData qrCodeData = new QRCodeGenerator().CreateQrCode(session.Mensagem, QRCodeGenerator.ECCLevel.L);
 
                         AsciiQRCode qrCode = new AsciiQRCode(qrCodeData);
 

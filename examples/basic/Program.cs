@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using QRCoder;
+﻿using QRCoder;
 
 internal class Program
 {
@@ -7,6 +6,7 @@ internal class Program
 
     public static async Task Main(string[] args)
     {
+        //Config
         WPPConnect.Models.Config wppConnectConfig = new WPPConnect.Models.Config()
         {
             Headless = false,
@@ -15,11 +15,12 @@ internal class Program
 
         WPPConnect.WPPConnect wppConnect = new WPPConnect.WPPConnect(wppConnectConfig);
 
-        string token = File.ReadAllText(@"C:\Users\Rener\Desktop\Teste.json");
+        //Token
+        //string token = File.ReadAllText(@"C:\Users\Rener\Desktop\Teste.json");
+        //WPPConnect.Models.Token tokenObj = JsonConvert.DeserializeObject<WPPConnect.Models.Token>(token);
+        //WPPConnect.Models.Session session = await wppConnect.CreateSession("Teste", tokenObj);
 
-        WPPConnect.Models.Token tokenObj = JsonConvert.DeserializeObject<WPPConnect.Models.Token>(token);
-
-        WPPConnect.Models.Session session = await wppConnect.CreateSession("Teste", tokenObj);
+        WPPConnect.Models.Session session = await wppConnect.CreateSession("Teste");
 
         wppConnect.OnAuthLogout += WppConnect_OnAuthLogout;
         wppConnect.OnAuthChange += WppConnect_OnAuthChange;
@@ -37,7 +38,7 @@ internal class Program
     {
         Console.WriteLine($"[{client.SessionName}:connectionChange] {token}");
 
-        QRCodeData qrCodeData = new QRCodeGenerator().CreateQrCode(token, QRCodeGenerator.ECCLevel.Q);
+        QRCodeData qrCodeData = new QRCodeGenerator().CreateQrCode(token, QRCodeGenerator.ECCLevel.L);
 
         AsciiQRCode qrCode = new AsciiQRCode(qrCodeData);
 
