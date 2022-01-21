@@ -2,22 +2,23 @@
 
 ![WPPConnect Banner](./img/wppconnect-banner.jpeg)
 
-> WPPConnect é um projeto open source desenvolvido pela comunidade com o objetivo de exportar funções do WhatsApp Web para o C#, que podem ser usadas para apoiar a criação de qualquer interação, como atendimento ao cliente, envio de mídia, reconhecimento de inteligência baseado em frases artificiais e muitas outras coisas. Use sua imaginação! 😀🤔💭
+> WPPConnect é um projeto open source desenvolvido pela comunidade com o objetivo de exportar funções do WhatsApp Web através da lib 
+> [wppconnect-team/wa-js](https://github.com/wppconnect-team/wa-js) para ser utilizado no C#. Podem ser usadas para apoiar a criação de qualquer interação, como atendimento ao cliente, envio de mídia, reconhecimento de inteligência baseado em frases artificiais e muitas outras coisas. Use sua imaginação! 😀🤔💭
 
 ## Functions
 
 |                                                            |    |
-| ---------------------------------------------------------- | ---|
+| ---------------------------------------------------------- |----|
 | Atualização automática do QRCode                           | ✔ |
 | Enviar **texto, imagem, vídeo, áudio e documentos**        | ✔ |
-| Get **contacts, chats, groups, group members, Block List** | ✔ |
-| Enviar contatos                                            | ✔ |
-| Enviar stickers                                            | ✔ |
-| Enviar stickers GIF                                        | ✔ |
+| Get **contacts, chats, groups, group members, Block List** |❌ |
+| Enviar contatos                                            |❌ |
+| Enviar stickers                                            |❌ |
+| Enviar stickers GIF                                        |❌ |
 | Múltiplas sessões                                          | ✔ |
-| Encaminhar mensagens                                       | ✔ |
+| Encaminhar mensagens                                       |❌ |
 | Receber mensagens                                          | ✔ |
-| Enviar _localicação_                                       | ✔ |
+| Enviar _localicação_                                       |❌ |
 | **e muito mais**                                           | ✔ |
 
 ## Installation
@@ -38,17 +39,16 @@ Solicitações de pull-requests são bem-vindas. Para grandes mudanças, abra um
 
 ## License
 
-This file is part of WPPConnect.
+Copyright 2021 WPPConnect Team
 
-WPPConnect is free software: you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-WPPConnect is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU Lesser General Public License for more details.
+    http://www.apache.org/licenses/LICENSE-2.0
 
-You should have received a copy of the GNU Lesser General Public License
-along with WPPConnect. If not, see <https://www.gnu.org/licenses/>.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.

@@ -1,5 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
-using QRCoder;
+﻿using QRCoder;
 
 internal class Program
 {

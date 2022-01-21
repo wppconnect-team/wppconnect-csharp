@@ -1,6 +1,8 @@
-## 1.12.0 (2022-01-08)
+### 1.0 (21/01/2022)
 
 
 #### Bug Fixes
 
-* Fixed downloadMedia (fix [#463](https://github.com/wppconnect-team/wppconnect/issues/463)) ([ea9ba75](https://github.com/wppconnect-team/wppconnect/commit/ea9ba75ec3e24103a7ccf55b0df43ffc8d46271b))
+* Criado o método ConnectionValidate para tornar padrão a forma de validar uma conexão
+* Alterado a licença para Apache, que é a memsa utilizada na lib wa-js
+* Migração do Puppeteer para o Playwright

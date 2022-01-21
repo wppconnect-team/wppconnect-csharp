@@ -18,9 +18,13 @@ namespace WPPConnect
         #region EventHandler
 
         //Auth - Change
-        public delegate void OnAuthChangeHandler(Models.Client client, string token);
+        public delegate void OnAuthChangeEventHandler(Models.Client client, string token);
 
-        public event OnAuthChangeHandler OnAuthChange;
+        public event OnAuthChangeEventHandler OnAuthChange;
+
+        public delegate void OnAuthLoginEventHandler(Models.Client client);
+
+        public event OnAuthLoginEventHandler OnAuthLogin;
 
         //Auth - Logout
         public delegate void OnAuthLogoutEventHandler(Models.Client client);
@@ -81,7 +85,17 @@ namespace WPPConnect
             }
         }
 
-        private static void BrowserPage_Request(object sender, RequestEventArgs e)
+        private Models.Connection ConnectionValidate(string sessionName)
+        {
+            Models.Connection connection = _Connections.SingleOrDefault(c => c.Client.SessionName == sessionName);
+
+            if (connection == null)
+                throw new Exception($"Não foi encontrado nenhuma sessão com o nome {sessionName}");
+            else
+                return connection;
+        }
+
+        private void BrowserPage_Request(object sender, RequestEventArgs e)
         {
             if (e.Request.ResourceType != ResourceType.Document)
             {
@@ -151,8 +165,7 @@ namespace WPPConnect
 
                 if (connection == null)
                 {
-                    connection = new Models.Connection();
-                    connection.Client.SessionName = sessionName;
+                    connection = new Models.Connection(sessionName);
 
                     if (Config.Debug)
                         Console.WriteLine($"[{connection.Client.SessionName}:browser] Initializing browser...");
@@ -321,15 +334,11 @@ namespace WPPConnect
 
         public async Task<Models.Session> Status(string sessionName)
         {
-            Models.Session session = new Models.Session();
-            session.Client.SessionName = sessionName;
+            Models.Session session = new Models.Session(sessionName);
 
             try
             {
-                Models.Connection connection = _Connections.SingleOrDefault(c => c.Client.SessionName == sessionName);
-
-                if (connection == null)
-                    throw new Exception($"Não foi encontrado nenhuma sessão com o nome {sessionName}");
+                Models.Connection connection = ConnectionValidate(sessionName);
 
                 bool authenticated = await connection.BrowserPage.EvaluateFunctionAsync<bool>("async => WPP.auth.isAuthenticated()");
 
@@ -357,15 +366,13 @@ namespace WPPConnect
 
         public async Task<Models.Session> QrCode(string sessionName)
         {
-            Models.Session session = new Models.Session();
+            Models.Session session = await Status(sessionName);
 
             try
             {
-                session = await Status(sessionName);
-
                 if (session.Status == Models.Enum.Status.Desconectado)
                 {
-                    Models.Connection connection = _Connections.Single(c => c.Client.SessionName == sessionName);
+                    Models.Connection connection = ConnectionValidate(sessionName);
 
                     JToken response = await connection.BrowserPage.EvaluateFunctionAsync<JToken>("async => WPP.auth.getAuthCode()");
 
@@ -400,16 +407,13 @@ namespace WPPConnect
 
         public async Task<Models.Session> Disconnect(string sessionName)
         {
-            Models.Session session = new Models.Session();
-            session.Client.SessionName = sessionName;
+            Models.Session session = await Status(sessionName);
 
             try
             {
-                Models.Session sessionStatus = await Status(sessionName);
-
-                if (sessionStatus.Status == Models.Enum.Status.Conectado)
+                if (session.Status == Models.Enum.Status.Conectado)
                 {
-                    Models.Connection connection = _Connections.Single(c => c.Client.SessionName == sessionName);
+                    Models.Connection connection = ConnectionValidate(sessionName);
 
                     bool logout = await connection.BrowserPage.EvaluateFunctionAsync<bool>("async => WPP.auth.logout()");
 
@@ -441,7 +445,7 @@ namespace WPPConnect
 
                 if (session.Status == Models.Enum.Status.Conectado)
                 {
-                    Models.Connection connection = _Connections.Single(c => c.Client.SessionName == sessionName);
+                    Models.Connection connection = ConnectionValidate(sessionName);
 
                     await connection.BrowserPage.EvaluateFunctionAsync("async => WPP.chat.sendTextMessage('5564992176420@c.us', 'Teste 1', { createChat: true })");
 
