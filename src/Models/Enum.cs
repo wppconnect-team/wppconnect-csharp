@@ -14,5 +14,12 @@
             None,
             File
         }
+
+        public enum Browser
+        {
+            Chromium,
+            Firefox,
+            Webkit
+        }
     }
 }

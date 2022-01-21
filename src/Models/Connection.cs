@@ -1,4 +1,4 @@
-﻿using PuppeteerSharp;
+﻿using Microsoft.Playwright;
 
 namespace WPPConnect.Models
 {
@@ -6,9 +6,9 @@ namespace WPPConnect.Models
     {
         public Models.Client Client { get; set; }
 
-        public Browser Browser { get; set; }
+        public IBrowser Browser { get; set; }
 
-        public Page BrowserPage { get; set; }
+        public IPage BrowserPage { get; set; }
 
         public Connection(string sessionName)
         {
