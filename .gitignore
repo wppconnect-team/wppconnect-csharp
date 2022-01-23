@@ -333,3 +333,5 @@ ASALocalRun/
 src/Aplicativo/web.config
 src/bin
 src/obj
+examples/basic/obj
+src/obj

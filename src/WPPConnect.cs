@@ -121,11 +121,12 @@ namespace WPPConnect
         {
             Models.Client client = _Connections.Single(c => c.Client.SessionName == sessionName).Client;
 
-            JObject response = JsonConvert.DeserializeObject<JObject>(message.ToString());
+            dynamic response = (System.Dynamic.ExpandoObject)message;
 
-            Models.Message messageObj = new Models.Message();
+            Models.Message messageObj = new Models.Message()
             {
-
+                Id = response.id.id,
+                Body = response.body
             };
 
             OnMessageReceived(client, messageObj);
