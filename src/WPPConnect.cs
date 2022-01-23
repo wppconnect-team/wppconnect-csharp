@@ -1,6 +1,4 @@
 ﻿using Microsoft.Playwright;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using QRCoder;
 
 namespace WPPConnect
@@ -312,7 +310,7 @@ namespace WPPConnect
 
                 return await QrCode(sessionName);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 throw;
             }
