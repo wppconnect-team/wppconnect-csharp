@@ -1,3 +1,8 @@
+### 1.0 (31/01/2022)
+
+* O arquivo wa-js está sendo "injetado" na página através da última versão do release da página do repositório
+
+
 ### 1.0 (21/01/2022)
 
 

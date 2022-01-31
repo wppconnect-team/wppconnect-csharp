@@ -1,5 +1,7 @@
 ﻿using Microsoft.Playwright;
+using Newtonsoft.Json.Linq;
 using QRCoder;
+using RestSharp;
 
 namespace WPPConnect
 {
@@ -66,9 +68,24 @@ namespace WPPConnect
             CheckVersion();
         }
 
-        private void CheckVersion()
+        private async void CheckVersion()
         {
-            Console.WriteLine("TODO: Checking for updates...");
+            RestClient client = new RestClient("https://api.github.com/repos/wppconnect-team/wa-js/releases/latest");
+
+            RestRequest request = new RestRequest();
+
+            RestResponse response = await client.GetAsync(request);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.OK)
+            {
+                JObject json = JObject.Parse(response.Content);
+
+                string version = json["name"].ToString();
+
+                Console.WriteLine($"[wa-js : {version}]");
+            }
+            else
+                Console.WriteLine("[wa-js version:não foi possível obter a versão]");
         }
 
         private async void Disconnect(Models.Client client)
@@ -286,7 +303,7 @@ namespace WPPConnect
 
                     await connection.BrowserPage.AddScriptTagAsync(new PageAddScriptTagOptions()
                     {
-                        Url = "https://arquivos.netplustecnologia.com/wppconnect-wa.js"
+                        Url = "https://github.com/wppconnect-team/wa-js/releases/latest/download/wppconnect-wa.js"
                     });
 
                     #region Events
