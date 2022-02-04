@@ -1,6 +1,5 @@
 ﻿using Microsoft.Playwright;
 using Newtonsoft.Json.Linq;
-using QRCoder;
 using RestSharp;
 
 namespace WPPConnect
@@ -42,7 +41,7 @@ namespace WPPConnect
 
         public WPPConnect()
         {
-            Start();
+            new WPPConnect(new Models.Config());
         }
 
         public WPPConnect(Models.Config config)
@@ -381,19 +380,6 @@ namespace WPPConnect
 
                     session.Status = Models.Enum.Status.QrCode;
                     session.Mensagem = fullCode;
-
-                    if (Config.LogQrCode)
-                    {
-                        Console.WriteLine($"[{connection.Client.SessionName}:qrcode] {session.Mensagem}");
-
-                        QRCodeData qrCodeData = new QRCodeGenerator().CreateQrCode(session.Mensagem, QRCodeGenerator.ECCLevel.L);
-
-                        AsciiQRCode qrCode = new AsciiQRCode(qrCodeData);
-
-                        string qrCodeAsAsciiArt = qrCode.GetGraphic(1);
-
-                        Console.WriteLine(qrCodeAsAsciiArt);
-                    }
 
                     return session;
                 }

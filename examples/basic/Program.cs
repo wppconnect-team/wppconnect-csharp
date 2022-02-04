@@ -2,18 +2,20 @@
 
 internal class Program
 {
+    private static WPPConnect.Models.Config _Config { get; set; }
+
     private static bool _Quit { get; set; }
 
     public static async Task Main(string[] args)
     {
         //Config
-        WPPConnect.Models.Config wppConnectConfig = new WPPConnect.Models.Config()
+        _Config = new WPPConnect.Models.Config()
         {
             Headless = false,
             Devtools = true
         };
 
-        WPPConnect.WPPConnect wppConnect = new WPPConnect.WPPConnect(wppConnectConfig);
+        WPPConnect.WPPConnect wppConnect = new WPPConnect.WPPConnect(_Config);
 
         //Token
         //string token = File.ReadAllText(@"C:\Users\Rener\Desktop\Teste.json");
@@ -38,13 +40,16 @@ internal class Program
     {
         Console.WriteLine($"[{client.SessionName}:connectionChange] {token}");
 
-        QRCodeData qrCodeData = new QRCodeGenerator().CreateQrCode(token, QRCodeGenerator.ECCLevel.L);
+        if (_Config.LogQrCode)
+        {
+            QRCodeData qrCodeData = new QRCodeGenerator().CreateQrCode(token, QRCodeGenerator.ECCLevel.L);
 
-        AsciiQRCode qrCode = new AsciiQRCode(qrCodeData);
+            AsciiQRCode qrCode = new AsciiQRCode(qrCodeData);
 
-        string qrCodeAsAsciiArt = qrCode.GetGraphic(1);
+            string qrCodeAsAsciiArt = qrCode.GetGraphic(1);
 
-        Console.WriteLine(qrCodeAsAsciiArt);
+            Console.WriteLine(qrCodeAsAsciiArt);
+        }
     }
 
     private static void WppConnect_OnAuthLogout(WPPConnect.Models.Client client)
