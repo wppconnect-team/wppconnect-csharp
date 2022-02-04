@@ -2,17 +2,16 @@
 
 namespace WPPConnect.Models
 {
-    internal class Connection
+    public class Connection
     {
-        public Models.Client Client { get; set; }
-
         public IBrowser Browser { get; set; }
 
         public IPage BrowserPage { get; set; }
 
-        public Connection(string sessionName)
+
+        public Connection(IBrowser browser)
         {
-            Client = new Client(sessionName);
+            Browser = browser;
         }
     }
 }

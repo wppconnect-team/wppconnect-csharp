@@ -1,4 +1,5 @@
 ﻿using QRCoder;
+using WPPConnect;
 
 internal class Program
 {
@@ -11,22 +12,40 @@ internal class Program
         //Config
         _Config = new WPPConnect.Models.Config()
         {
-            Headless = false,
-            Devtools = true
+            Headless = false
         };
 
-        WPPConnect.WPPConnect wppConnect = new WPPConnect.WPPConnect(_Config);
+        WPPConnect.WPPConnection wppConnect = new WPPConnect.WPPConnection(_Config);
+
+        #region Tokens
 
         //Token
         //string token = File.ReadAllText(@"C:\Users\Rener\Desktop\Teste.json");
         //WPPConnect.Models.Token tokenObj = JsonConvert.DeserializeObject<WPPConnect.Models.Token>(token);
         //WPPConnect.Models.Session session = await wppConnect.CreateSession("Teste", tokenObj);
 
-        WPPConnect.Models.Session session = await wppConnect.CreateSession("Teste");
+        #endregion
 
         wppConnect.OnAuthLogout += WppConnect_OnAuthLogout;
         wppConnect.OnAuthChange += WppConnect_OnAuthChange;
         wppConnect.OnMessageReceived += WppConnect_OnMessageReceived;
+
+        WPPConnect.Models.Client client = await wppConnect.CreateSession("Teste");
+
+        #region Client
+
+        //WPPConnect.Models.Client client = wppConnect.Client("Teste");
+
+        //await client.Status();
+        //await client.QrCode();
+        //await client.SendMessage(new WPPConnect.Models.Message()
+        //{
+        //    Body = "Teste"
+        //});
+
+        #endregion
+
+        #region Exit
 
         while (!_Quit)
         {
@@ -34,6 +53,8 @@ internal class Program
 
             _Quit = keyInfo.Modifiers == ConsoleModifiers.Control && keyInfo.Key == ConsoleKey.C;
         }
+
+        #endregion
     }
 
     private static void WppConnect_OnAuthChange(WPPConnect.Models.Client client, string token)
@@ -46,8 +67,9 @@ internal class Program
 
             AsciiQRCode qrCode = new AsciiQRCode(qrCodeData);
 
-            string qrCodeAsAsciiArt = qrCode.GetGraphic(1);
+            string qrCodeAsAsciiArt = qrCode.GetGraphicSmall();
 
+            Console.WriteLine();
             Console.WriteLine(qrCodeAsAsciiArt);
         }
     }

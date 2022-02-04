@@ -8,11 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="QRCoder" Version="1.4.3" />
+    <ProjectReference Include="..\..\src\WPPConnect.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\WPPConnect.csproj" />
+    <Reference Include="QRCoder">
+      <HintPath>..\..\..\qrcoder\QRCoder\bin\Debug\net6.0\QRCoder.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>
