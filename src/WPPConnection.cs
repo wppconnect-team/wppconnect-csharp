@@ -4,13 +4,13 @@ using RestSharp;
 
 namespace WPPConnect
 {
-    public class WPPConnect
+    public class WPPConnection
     {
         #region Properties
 
         public Models.Config Config { get; internal set; }
 
-        private static List<Models.Connection> _Connections = new List<Models.Connection>();
+        private static List<Models.Client> _Clients = new List<Models.Client>();
 
         #endregion
 
@@ -37,14 +37,59 @@ namespace WPPConnect
 
         #endregion
 
-        #region Constructors
+        #region Events
 
-        public WPPConnect()
+        private bool BrowserPage_OnAuthChange(string sessionName, dynamic token)
         {
-            new WPPConnect(new Models.Config());
+            Models.Client client = _Clients.Single(c => c.SessionName == sessionName);
+
+            string fullCode = token.fullCode;
+
+            OnAuthChange(client, fullCode);
+
+            return true;
         }
 
-        public WPPConnect(Models.Config config)
+        private bool BrowserPage_OnAuthLogout(string sessionName)
+        {
+            Models.Client client = _Clients.Single(c => c.SessionName == sessionName);
+
+            client.Connection.Browser.CloseAsync().Wait();
+
+            _Clients.Remove(client);
+
+            OnAuthLogout(client);
+
+            return true;
+        }
+
+        private bool BrowserPage_OnMessageReceived(string sessionName, object message)
+        {
+            Models.Client client = _Clients.Single(c => c.SessionName == sessionName);
+
+            dynamic response = (System.Dynamic.ExpandoObject)message;
+
+            Models.Message messageObj = new Models.Message()
+            {
+                Id = response.id.id,
+                Body = response.body
+            };
+
+            OnMessageReceived(client, messageObj);
+
+            return true;
+        }
+
+        #endregion
+
+        #region Constructors
+
+        public WPPConnection()
+        {
+            new WPPConnection(new Models.Config());
+        }
+
+        public WPPConnection(Models.Config config)
         {
             Config = config;
 
@@ -87,72 +132,11 @@ namespace WPPConnect
                 Console.WriteLine("[wa-js version:não foi possível obter a versão]");
         }
 
-        private async void Disconnect(Models.Client client)
-        {
-            Models.Connection connection = _Connections.SingleOrDefault(c => c.Client.SessionName == client.SessionName);
-
-            if (connection != null)
-            {
-                await connection.Browser.CloseAsync();
-
-                _Connections.Remove(connection);
-            }
-        }
-
-        private Models.Connection ConnectionValidate(string sessionName)
-        {
-            Models.Connection connection = _Connections.SingleOrDefault(c => c.Client.SessionName == sessionName);
-
-            if (connection == null)
-                throw new Exception($"Não foi encontrado nenhuma sessão com o nome {sessionName}");
-            else
-                return connection;
-        }
-
-        private bool BrowserPage_OnAuthChange(string sessionName, dynamic token)
-        {
-            Models.Client client = _Connections.Single(c => c.Client.SessionName == sessionName).Client;
-
-            string fullCode = token.fullCode;
-
-            OnAuthChange(client, fullCode);
-
-            return true;
-        }
-
-        private bool BrowserPage_OnAuthLogout(string sessionName)
-        {
-            Models.Client client = _Connections.Single(c => c.Client.SessionName == sessionName).Client;
-
-            Disconnect(client);
-
-            OnAuthLogout(client);
-
-            return true;
-        }
-
-        private bool BrowserPage_OnMessageReceived(string sessionName, object message)
-        {
-            Models.Client client = _Connections.Single(c => c.Client.SessionName == sessionName).Client;
-
-            dynamic response = (System.Dynamic.ExpandoObject)message;
-
-            Models.Message messageObj = new Models.Message()
-            {
-                Id = response.id.id,
-                Body = response.body
-            };
-
-            OnMessageReceived(client, messageObj);
-
-            return true;
-        }
-
         #endregion
 
-        #region Methods
+        #region Methods - Public
 
-        public async Task<Models.Session> CreateSession(string sessionName, Models.Token? token = null)
+        public async Task<Models.Client> CreateSession(string sessionName, Models.Token? token = null)
         {
             try
             {
@@ -173,18 +157,18 @@ namespace WPPConnect
                         break;
                 }
 
-                Models.Connection connection = _Connections.SingleOrDefault(i => i.Client.SessionName == sessionName);
+                Models.Client client = _Clients.SingleOrDefault(i => i.SessionName == sessionName);
 
-                if (connection == null)
+                if (client == null)
                 {
-                    connection = new Models.Connection(sessionName);
-
                     if (Config.Debug)
-                        Console.WriteLine($"[{connection.Client.SessionName}:browser] Initializing browser...");
+                        Console.WriteLine($"[{sessionName}:browser] Initializing browser...");
 
                     if (!string.IsNullOrEmpty(Config.BrowserWsUrl))
                     {
-                        connection.Browser = await playwrightBrowser.ConnectAsync(Config.BrowserWsUrl);
+                        IBrowser browser = await playwrightBrowser.ConnectAsync(Config.BrowserWsUrl);
+
+                        client = new Models.Client(sessionName, browser);
                     }
                     else
                     {
@@ -275,32 +259,34 @@ namespace WPPConnect
                             Channel = "chrome"
                         };
 
-                        connection.Browser = await playwrightBrowser.LaunchAsync(launchOptions);
+                        IBrowser browser = await playwrightBrowser.LaunchAsync(launchOptions);
+
+                        client = new Models.Client(sessionName, browser);
                     }
 
                     if (Config.Debug)
-                        Console.WriteLine($"[{connection.Client.SessionName}:client] Initializing...");
+                        Console.WriteLine($"[{client.SessionName}:client] Initializing...");
 
-                    connection.BrowserPage = await connection.Browser.NewPageAsync(new BrowserNewPageOptions()
+                    client.Connection.BrowserPage = await client.Connection.Browser.NewPageAsync(new BrowserNewPageOptions()
                     {
                         BypassCSP = true,
                         UserAgent = "WhatsApp/2.2043.8 Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36"
                     });
 
-                    await connection.BrowserPage.GotoAsync("https://web.whatsapp.com");
+                    await client.Connection.BrowserPage.GotoAsync("https://web.whatsapp.com");
 
                     if (token != null)
                     {
-                        await connection.BrowserPage.EvaluateAsync("async => window.localStorage.clear()");
-                        await connection.BrowserPage.EvaluateAsync($"async => localStorage.setItem('WABrowserId','{token.WABrowserId}')");
-                        await connection.BrowserPage.EvaluateAsync($"async => localStorage.setItem('WASecretBundle','{token.WASecretBundle}')");
-                        await connection.BrowserPage.EvaluateAsync($"async => localStorage.setItem('WAToken1','{token.WAToken1}')");
-                        await connection.BrowserPage.EvaluateAsync($"async => localStorage.setItem('WAToken2','{token.WAToken2}')");
+                        await client.Connection.BrowserPage.EvaluateAsync("async => window.localStorage.clear()");
+                        await client.Connection.BrowserPage.EvaluateAsync($"async => localStorage.setItem('WABrowserId','{token.WABrowserId}')");
+                        await client.Connection.BrowserPage.EvaluateAsync($"async => localStorage.setItem('WASecretBundle','{token.WASecretBundle}')");
+                        await client.Connection.BrowserPage.EvaluateAsync($"async => localStorage.setItem('WAToken1','{token.WAToken1}')");
+                        await client.Connection.BrowserPage.EvaluateAsync($"async => localStorage.setItem('WAToken2','{token.WAToken2}')");
+
+                        await client.Connection.BrowserPage.GotoAsync("https://web.whatsapp.com");
                     }
 
-                    await connection.BrowserPage.GotoAsync("https://web.whatsapp.com");
-
-                    await connection.BrowserPage.AddScriptTagAsync(new PageAddScriptTagOptions()
+                    await client.Connection.BrowserPage.AddScriptTagAsync(new PageAddScriptTagOptions()
                     {
                         Url = "https://github.com/wppconnect-team/wa-js/releases/latest/download/wppconnect-wa.js"
                     });
@@ -308,23 +294,38 @@ namespace WPPConnect
                     #region Events
 
                     //Auth - Logout
-                    await connection.BrowserPage.ExposeFunctionAsync<string, bool>("browserPage_OnConnectionLogout", BrowserPage_OnAuthLogout);
-                    await connection.BrowserPage.EvaluateAsync("async => WPP.auth.on('logout', function() { browserPage_OnConnectionLogout('" + connection.Client.SessionName + "') })");
+                    await client.Connection.BrowserPage.ExposeFunctionAsync<string, bool>("browserPage_OnConnectionLogout", BrowserPage_OnAuthLogout);
+                    await client.Connection.BrowserPage.EvaluateAsync("async => WPP.auth.on('logout', function() { browserPage_OnConnectionLogout('" + client.SessionName + "') })");
 
                     //Auth - Change
-                    await connection.BrowserPage.ExposeFunctionAsync<string, object, bool>("browserPage_OnAuthChange", BrowserPage_OnAuthChange);
-                    await connection.BrowserPage.EvaluateAsync("async => WPP.auth.on('change', function(e) { browserPage_OnAuthChange('" + connection.Client.SessionName + "', e) })");
+                    await client.Connection.BrowserPage.ExposeFunctionAsync<string, object, bool>("browserPage_OnAuthChange", BrowserPage_OnAuthChange);
+                    await client.Connection.BrowserPage.EvaluateAsync("async => WPP.auth.on('change', function(e) { browserPage_OnAuthChange('" + client.SessionName + "', e) })");
 
                     //Chat - OnMessageReceived
-                    await connection.BrowserPage.ExposeFunctionAsync<string, object, bool>("browserPage_OnMessageReceived", BrowserPage_OnMessageReceived);
-                    await connection.BrowserPage.EvaluateAsync("async => WPP.whatsapp.MsgStore.on('change', function(e) { browserPage_OnMessageReceived('" + connection.Client.SessionName + "', e) })");
+                    await client.Connection.BrowserPage.ExposeFunctionAsync<string, object, bool>("browserPage_OnMessageReceived", BrowserPage_OnMessageReceived);
+                    await client.Connection.BrowserPage.EvaluateAsync("async => WPP.whatsapp.MsgStore.on('change', function(e) { browserPage_OnMessageReceived('" + client.SessionName + "', e) })");
 
                     #endregion
 
-                    _Connections.Add(connection);
+                    _Clients.Add(client);
+                }
+                else
+                    throw new Exception($"Já existe uma session com o nome {sessionName}");
+
+                if (Config.Debug)
+                    Console.WriteLine($"[{sessionName}:client] Initialized");
+
+                Models.Session session = await client.QrCode();
+
+                if (Config.LogQrCode && session.Status == Models.Enum.Status.QrCode)
+                {
+                    dynamic qrCodeJson = new JObject();
+                    qrCodeJson.fullCode = session.Mensagem;
+
+                    BrowserPage_OnAuthChange(client.SessionName, qrCodeJson);
                 }
 
-                return await QrCode(sessionName);
+                return client;
             }
             catch (Exception)
             {
@@ -332,119 +333,14 @@ namespace WPPConnect
             }
         }
 
-        public async Task<Models.Session> Status(string sessionName)
+        public Models.Client Client(string sessionName)
         {
-            Models.Session session = new Models.Session(sessionName);
+            Models.Client client = _Clients.SingleOrDefault(c => c.SessionName == sessionName);
 
-            try
-            {
-                Models.Connection connection = ConnectionValidate(sessionName);
-
-                bool authenticated = await connection.BrowserPage.EvaluateAsync<bool>("async => WPP.auth.isAuthenticated()");
-
-                if (authenticated)
-                {
-                    session.Status = Models.Enum.Status.Conectado;
-
-                    return session;
-                }
-                else
-                {
-                    session.Status = Models.Enum.Status.Desconectado;
-
-                    return session;
-                }
-            }
-            catch (Exception e)
-            {
-                session.Status = Models.Enum.Status.Desconectado;
-                session.Mensagem = e.Message;
-
-                return session;
-            }
-        }
-
-        public async Task<Models.Session> QrCode(string sessionName)
-        {
-            Models.Session session = await Status(sessionName);
-
-            try
-            {
-                if (session.Status == Models.Enum.Status.Desconectado)
-                {
-                    Models.Connection connection = ConnectionValidate(sessionName);
-
-                    dynamic response = await connection.BrowserPage.EvaluateAsync<System.Dynamic.ExpandoObject>("async => WPP.auth.getAuthCode()");
-
-                    string fullCode = response.fullCode;
-
-                    session.Status = Models.Enum.Status.QrCode;
-                    session.Mensagem = fullCode;
-
-                    return session;
-                }
-
-                return session;
-            }
-            catch (Exception)
-            {
-                return session;
-            }
-        }
-
-        public async Task<Models.Session> Disconnect(string sessionName)
-        {
-            Models.Session session = await Status(sessionName);
-
-            try
-            {
-                if (session.Status == Models.Enum.Status.Conectado)
-                {
-                    Models.Connection connection = ConnectionValidate(sessionName);
-
-                    bool logout = await connection.BrowserPage.EvaluateAsync<bool>("async => WPP.auth.logout()");
-
-                    await Disconnect(sessionName);
-
-                    session.Status = Models.Enum.Status.Desconectado;
-
-                    return session;
-                }
-
-                session.Status = Models.Enum.Status.Desconectado;
-
-                return session;
-            }
-            catch (Exception e)
-            {
-                session.Status = Models.Enum.Status.Desconectado;
-                session.Mensagem = e.Message;
-
-                return session;
-            }
-        }
-
-        public async Task<bool> SendMessage(string sessionName, Models.Message message)
-        {
-            try
-            {
-                Models.Session session = await Status(sessionName);
-
-                if (session.Status == Models.Enum.Status.Conectado)
-                {
-                    Models.Connection connection = ConnectionValidate(sessionName);
-
-                    await connection.BrowserPage.EvaluateAsync("async => WPP.chat.sendTextMessage('5564992176420@c.us', 'Teste 1', { createChat: true })");
-
-                    return true;
-                }
-
-                return false;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
+            if (client == null)
+                throw new Exception($"Não foi encontrado nenhuma sessão com o nome {sessionName}");
+            else
+                return client;
         }
 
         #endregion

@@ -16,7 +16,7 @@
 
         public bool Headless { get; set; } = true;
 
-        public bool Devtools { get; set; } = false;
+        public bool Devtools { get; set; } = true;
 
         public Enum.Browser Browser { get; internal set; } = Enum.Browser.Chromium;
     }

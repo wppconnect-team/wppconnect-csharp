@@ -8,9 +8,9 @@
 
         public string? Mensagem { get; set; }
 
-        public Session(string sessionName)
+        public Session(Models.Client client)
         {
-            Client = new Models.Client(sessionName);
+            Client = client;
         }
     }
 }
