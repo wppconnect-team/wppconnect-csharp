@@ -317,7 +317,7 @@ namespace WPPConnect
 
                 Models.Session session = await client.QrCode();
 
-                if (Config.LogQrCode && session.Status == Models.Enum.Status.QrCode)
+                if (session.Status == Models.Enum.Status.QrCode)
                 {
                     dynamic qrCodeJson = new JObject();
                     qrCodeJson.fullCode = session.Mensagem;
