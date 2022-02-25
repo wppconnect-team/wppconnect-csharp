@@ -1,4 +1,4 @@
 ### TODO
 
-- [ ] Evento quando efetua a autenticação (depois de ler o qrcode)
-- [ ] Verificar evento após conectar, pois está recebendo algumas mensagens já lidas
+- [ ] Evento quando efetua a autenticaÃ§Ã£o (depois de ler o qrcode)
+- [ ] Verificar evento apÃ³s conectar, pois estÃ¡ recebendo algumas mensagens jÃ¡ lidas
