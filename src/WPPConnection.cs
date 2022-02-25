@@ -1,6 +1,7 @@
 ﻿using Microsoft.Playwright;
 using Newtonsoft.Json.Linq;
 using RestSharp;
+using System.Dynamic;
 
 namespace WPPConnect
 {
@@ -52,7 +53,7 @@ namespace WPPConnect
 
         private bool BrowserPage_OnAuthLogout(string sessionName)
         {
-            Models.Client client = _Clients.Single(c => c.SessionName == sessionName);
+            Models.Client client = Client(sessionName);
 
             client.Connection.Browser.CloseAsync().Wait();
 
@@ -63,16 +64,17 @@ namespace WPPConnect
             return true;
         }
 
-        private bool BrowserPage_OnMessageReceived(string sessionName, object message)
+        private bool BrowserPage_OnMessageReceived(string sessionName, ExpandoObject message)
         {
             Models.Client client = _Clients.Single(c => c.SessionName == sessionName);
 
-            dynamic response = (System.Dynamic.ExpandoObject)message;
+            dynamic response = message;
 
             Models.Message messageObj = new Models.Message()
             {
                 Id = response.id.id,
-                Body = response.body
+                Body = response.caption,
+                From = response.from.Substring(0, response.from.IndexOf('@'))
             };
 
             OnMessageReceived(client, messageObj);
@@ -302,7 +304,7 @@ namespace WPPConnect
                     await client.Connection.BrowserPage.EvaluateAsync("async => WPP.auth.on('change', function(e) { browserPage_OnAuthChange('" + client.SessionName + "', e) })");
 
                     //Chat - OnMessageReceived
-                    await client.Connection.BrowserPage.ExposeFunctionAsync<string, object, bool>("browserPage_OnMessageReceived", BrowserPage_OnMessageReceived);
+                    await client.Connection.BrowserPage.ExposeFunctionAsync<string, ExpandoObject, bool>("browserPage_OnMessageReceived", BrowserPage_OnMessageReceived);
                     await client.Connection.BrowserPage.EvaluateAsync("async => WPP.whatsapp.MsgStore.on('change', function(e) { browserPage_OnMessageReceived('" + client.SessionName + "', e) })");
 
                     #endregion
