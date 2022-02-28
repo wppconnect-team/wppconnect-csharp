@@ -12,7 +12,8 @@ internal class Program
         //Config
         _Config = new WPPConnect.Models.Config()
         {
-            Headless = false
+            Headless = false,
+            Version = WPPConnect.Models.Enum.LibVersion.Nightly
         };
 
         WPPConnect.WPPConnection wppConnect = new WPPConnect.WPPConnection(_Config);
@@ -26,18 +27,20 @@ internal class Program
 
         #endregion
 
+        wppConnect.OnAuthCodeChange += WppConnect_OnAuthChange;
+        wppConnect.OnAuthLogin += WppConnect_OnAuthLogin;
         wppConnect.OnAuthLogout += WppConnect_OnAuthLogout;
-        wppConnect.OnAuthChange += WppConnect_OnAuthChange;
-        wppConnect.OnMessageReceived += WppConnect_OnMessageReceived;
+        
 
-        WPPConnect.Models.Client client = await wppConnect.CreateSession("Teste");
+        WPPConnect.Models.Client clientCreate = await wppConnect.CreateSession("Teste");
 
         #region Client
 
-        //WPPConnect.Models.Client client = wppConnect.Client("Teste");
+        WPPConnect.Models.Client client = wppConnect.Client("Teste");
 
-        //await client.Status();
-        //await client.QrCode();
+        WPPConnect.Models.Session clientStatus = await client.Status();
+        WPPConnect.Models.Session clientQrCode = await client.QrCode();
+
         //await client.SendMessage(new WPPConnect.Models.Message()
         //{
         //    Body = "Teste"
@@ -72,6 +75,11 @@ internal class Program
             Console.WriteLine();
             Console.WriteLine(qrCodeAsAsciiArt);
         }
+    }
+
+    private static void WppConnect_OnAuthLogin(WPPConnect.Models.Client client)
+    {
+        Console.WriteLine($"[{client.SessionName}:login]");
     }
 
     private static void WppConnect_OnAuthLogout(WPPConnect.Models.Client client)

@@ -17,11 +17,12 @@ namespace WPPConnect
 
         #region EventHandler
 
-        //Auth - Change
-        public delegate void OnAuthChangeEventHandler(Models.Client client, string token);
+        //Auth - CodeChange
+        public delegate void OnAuthCodeChangeEventHandler(Models.Client client, string token);
 
-        public event OnAuthChangeEventHandler OnAuthChange;
+        public event OnAuthCodeChangeEventHandler OnAuthCodeChange;
 
+        //Auth - Login (Authenticated)
         public delegate void OnAuthLoginEventHandler(Models.Client client);
 
         public event OnAuthLoginEventHandler OnAuthLogin;
@@ -30,6 +31,11 @@ namespace WPPConnect
         public delegate void OnAuthLogoutEventHandler(Models.Client client);
 
         public event OnAuthLogoutEventHandler OnAuthLogout;
+
+        //Auth - Require
+        public delegate void OnAuthRequireEventHandler(Models.Client client, string token);
+
+        public event OnAuthRequireEventHandler OnAuthRequire;
 
         //Chat - OnMessageReceived
         public delegate void OnMessageReceivedEventHandler(Models.Client client, Models.Message message);
@@ -40,26 +46,64 @@ namespace WPPConnect
 
         #region Events
 
-        private bool BrowserPage_OnAuthChange(string sessionName, dynamic token)
+        private bool BrowserPage_OnAuthCodeChange(string sessionName, dynamic token)
         {
-            Models.Client client = _Clients.Single(c => c.SessionName == sessionName);
+            if (token != null)
+            {
+                if (this.OnAuthCodeChange != null)
+                {
+                    Models.Client client = _Clients.Single(c => c.SessionName == sessionName);
 
-            string fullCode = token.fullCode;
+                    string fullCode = token.fullCode;
 
-            OnAuthChange(client, fullCode);
+                    OnAuthCodeChange(client, fullCode);
+                }
+            }
+
+            return true;
+        }
+
+        private bool BrowserPage_OnAuthLogin(string sessionName)
+        {
+            if (this.OnAuthLogin != null)
+            {
+                Models.Client client = _Clients.Single(c => c.SessionName == sessionName);
+
+                OnAuthLogin(client);
+            }
 
             return true;
         }
 
         private bool BrowserPage_OnAuthLogout(string sessionName)
         {
-            Models.Client client = Client(sessionName);
+            if (this.OnAuthLogout != null)
+            {
+                Models.Client client = Client(sessionName);
 
-            client.Connection.Browser.CloseAsync().Wait();
+                client.Connection.Browser.CloseAsync();
 
-            _Clients.Remove(client);
+                _Clients.Remove(client);
 
-            OnAuthLogout(client);
+                OnAuthLogout(client);
+            }
+
+            return true;
+        }
+
+        private bool BrowserPage_OnAuthRequire(string sessionName, object token)
+        {
+            if (token != null)
+            {
+                if (this.OnAuthRequire != null)
+                {
+                    Models.Client client = _Clients.Single(c => c.SessionName == sessionName);
+
+                    //string fullCode = token.fullCode;
+
+                    //OnAuthRequire(client, fullCode);
+                }
+            }
 
             return true;
         }
@@ -116,22 +160,31 @@ namespace WPPConnect
 
         private async void CheckVersion()
         {
-            RestClient client = new RestClient("https://api.github.com/repos/wppconnect-team/wa-js/releases/latest");
+            string versionUrl;
+
+            if (Config.Version == Models.Enum.LibVersion.Latest)
+                versionUrl = "https://api.github.com/repos/wppconnect-team/wa-js/releases/latest";
+            else
+                versionUrl = "https://api.github.com/repos/wppconnect-team/wa-js/releases/tags/nightly";
+
+            RestClient client = new RestClient(versionUrl);
 
             RestRequest request = new RestRequest();
 
             RestResponse response = await client.GetAsync(request);
 
-            if (response.StatusCode == System.Net.HttpStatusCode.OK)
+            if (response.StatusCode == System.Net.HttpStatusCode.OK && !string.IsNullOrEmpty(response.Content))
             {
                 JObject json = JObject.Parse(response.Content);
 
-                string version = json["name"].ToString();
+                string version = (string)json["name"];
 
                 Console.WriteLine($"[wa-js : {version}]");
             }
             else
                 Console.WriteLine("[wa-js version:não foi possível obter a versão]");
+
+            Console.WriteLine("");
         }
 
         #endregion
@@ -288,24 +341,42 @@ namespace WPPConnect
                         await client.Connection.BrowserPage.GotoAsync("https://web.whatsapp.com");
                     }
 
-                    await client.Connection.BrowserPage.AddScriptTagAsync(new PageAddScriptTagOptions()
-                    {
-                        Url = "https://github.com/wppconnect-team/wa-js/releases/latest/download/wppconnect-wa.js"
-                    });
+                    #region Inject
+
+                    PageAddScriptTagOptions pageAddScriptTagOptions = new PageAddScriptTagOptions();
+
+                    if (Config.Version == Models.Enum.LibVersion.Latest)
+                        pageAddScriptTagOptions.Url = "https://github.com/wppconnect-team/wa-js/releases/latest/download/wppconnect-wa.js";
+                    if (Config.Version == Models.Enum.LibVersion.Nightly)
+                        pageAddScriptTagOptions.Url = "https://github.com/wppconnect-team/wa-js/releases/download/nightly/wppconnect-wa.js";
+
+                    await client.Connection.BrowserPage.AddScriptTagAsync(pageAddScriptTagOptions);
+
+                    #endregion
 
                     #region Events
 
-                    //Auth - Logout
-                    await client.Connection.BrowserPage.ExposeFunctionAsync<string, bool>("browserPage_OnConnectionLogout", BrowserPage_OnAuthLogout);
-                    await client.Connection.BrowserPage.EvaluateAsync("async => WPP.auth.on('logout', function() { browserPage_OnConnectionLogout('" + client.SessionName + "') })");
+                    await client.Connection.BrowserPage.EvaluateAsync("async => WPP.webpack.onReady(function () { console.log('onReady') })");
 
-                    //Auth - Change
-                    await client.Connection.BrowserPage.ExposeFunctionAsync<string, object, bool>("browserPage_OnAuthChange", BrowserPage_OnAuthChange);
-                    await client.Connection.BrowserPage.EvaluateAsync("async => WPP.auth.on('change', function(e) { browserPage_OnAuthChange('" + client.SessionName + "', e) })");
+                    //Auth - Require
+                    //await client.Connection.BrowserPage.ExposeFunctionAsync<string, object, bool>("browserPage_OnAuthRequire", BrowserPage_OnAuthRequire);
+                    await client.Connection.BrowserPage.EvaluateAsync("async => WPP.conn.on('require_auth', function(e) { console.log('require_auth') })");
+
+                    //Auth - CodeChange
+                    //await client.Connection.BrowserPage.ExposeFunctionAsync<string, object, bool>("browserPage_OnAuthCodeChange", BrowserPage_OnAuthCodeChange);
+                    //await client.Connection.BrowserPage.EvaluateAsync("async => WPP.conn.on('auth_code_change', function(e) { console.log('auth_code_change') })");
+
+                    ////Auth - Login (Authenticated)
+                    //await client.Connection.BrowserPage.ExposeFunctionAsync<string, bool>("browserPage_OnAuthLogin", BrowserPage_OnAuthLogin);
+                    //await client.Connection.BrowserPage.EvaluateAsync("async => WPP.conn.on('authenticated', function(e) { browserPage_OnAuthLogin('" + client.SessionName + "') })");
+
+                    ////Auth - Logout
+                    //await client.Connection.BrowserPage.ExposeFunctionAsync<string, bool>("browserPage_OnAuthLogout", BrowserPage_OnAuthLogout);
+                    //await client.Connection.BrowserPage.EvaluateAsync("async => WPP.conn.on('logout', function() { browserPage_OnAuthLogout('" + client.SessionName + "') })");
 
                     //Chat - OnMessageReceived
-                    await client.Connection.BrowserPage.ExposeFunctionAsync<string, ExpandoObject, bool>("browserPage_OnMessageReceived", BrowserPage_OnMessageReceived);
-                    await client.Connection.BrowserPage.EvaluateAsync("async => WPP.whatsapp.MsgStore.on('change', function(e) { browserPage_OnMessageReceived('" + client.SessionName + "', e) })");
+                    //await client.Connection.BrowserPage.ExposeFunctionAsync<string, ExpandoObject, bool>("browserPage_OnMessageReceived", BrowserPage_OnMessageReceived);
+                    //await client.Connection.BrowserPage.EvaluateAsync("async => WPP.whatsapp.MsgStore.on('change', function(e) { browserPage_OnMessageReceived('" + client.SessionName + "', e) })");
 
                     #endregion
 
@@ -317,15 +388,15 @@ namespace WPPConnect
                 if (Config.Debug)
                     Console.WriteLine($"[{sessionName}:client] Initialized");
 
-                Models.Session session = await client.QrCode();
+                //Models.Session session = await client.QrCode();
 
-                if (session.Status == Models.Enum.Status.QrCode)
-                {
-                    dynamic qrCodeJson = new JObject();
-                    qrCodeJson.fullCode = session.Mensagem;
+                //if (session.Status == Models.Enum.Status.QrCode)
+                //{
+                //    dynamic qrCodeJson = new JObject();
+                //    qrCodeJson.fullCode = session.Mensagem;
 
-                    BrowserPage_OnAuthChange(client.SessionName, qrCodeJson);
-                }
+                //    BrowserPage_OnAuthCodeChange(client.SessionName, qrCodeJson);
+                //}
 
                 return client;
             }

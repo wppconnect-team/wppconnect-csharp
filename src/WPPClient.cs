@@ -8,7 +8,7 @@
 
             try
             {
-                bool authenticated = await client.Connection.BrowserPage.EvaluateAsync<bool>("async => WPP.auth.isAuthenticated()");
+                bool authenticated = await client.Connection.BrowserPage.EvaluateAsync<bool>("async => WPP.conn.isAuthenticated()");
 
                 if (authenticated)
                 {
@@ -40,7 +40,7 @@
             {
                 if (session.Status == Models.Enum.Status.Desconectado)
                 {
-                    dynamic response = await client.Connection.BrowserPage.EvaluateAsync<System.Dynamic.ExpandoObject>("async => WPP.auth.getAuthCode()");
+                    dynamic response = await client.Connection.BrowserPage.EvaluateAsync<System.Dynamic.ExpandoObject>("async => WPP.conn.getAuthCode()");
 
                     string fullCode = response.fullCode;
 
@@ -66,7 +66,7 @@
             {
                 if (session.Status == Models.Enum.Status.Conectado)
                 {
-                    bool logout = await client.Connection.BrowserPage.EvaluateAsync<bool>("async => WPP.auth.logout()");
+                    bool logout = await client.Connection.BrowserPage.EvaluateAsync<bool>("async => WPP.conn.logout()");
 
                     await Disconnect(client);
 

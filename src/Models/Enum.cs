@@ -21,5 +21,11 @@
             Firefox,
             Webkit
         }
+
+        public enum LibVersion
+        {
+            Latest,
+            Nightly
+        }
     }
 }
