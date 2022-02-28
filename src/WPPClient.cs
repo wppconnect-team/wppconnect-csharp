@@ -1,4 +1,6 @@
-﻿namespace WPPConnect
+﻿using Newtonsoft.Json;
+
+namespace WPPConnect
 {
     public static class WPPClient
     {
@@ -25,7 +27,7 @@
             }
             catch (Exception e)
             {
-                session.Status = Models.Enum.Status.Desconectado;
+                session.Status = Models.Enum.Status.ERROR;
                 session.Mensagem = e.Message;
 
                 return session;
@@ -85,6 +87,29 @@
                 session.Mensagem = e.Message;
 
                 return session;
+            }
+        }
+
+        public static async Task<Models.Token> Token(this Models.Client client)
+        {
+            Models.Session session = await Status(client);
+
+            try
+            {
+                if (session.Status == Models.Enum.Status.Desconectado)
+                {
+                    dynamic response = await client.Connection.BrowserPage.EvaluateAsync<System.Dynamic.ExpandoObject>("async => WPP.conn.getAuthCode()");
+
+                    Models.Token token = new Models.Token("", "", "", response.browserId, "");
+
+                    return token;
+                }
+
+                return null;
+            }
+            catch (Exception)
+            {
+                return null;
             }
         }
 

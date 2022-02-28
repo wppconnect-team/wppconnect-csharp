@@ -6,7 +6,9 @@
         {
             Conectado,
             Desconectado,
-            QrCode
+            QrCode,
+            Token,
+            ERROR
         }
 
         public enum TokenStore

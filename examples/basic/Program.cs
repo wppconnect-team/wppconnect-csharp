@@ -28,7 +28,7 @@ internal class Program
         #endregion
 
         wppConnect.OnAuthCodeChange += WppConnect_OnAuthChange;
-        wppConnect.OnAuthLogin += WppConnect_OnAuthLogin;
+        wppConnect.OnAuthAuthenticated += WppConnect_OnAuthAuthenticated;
         wppConnect.OnAuthLogout += WppConnect_OnAuthLogout;
         
 
@@ -60,13 +60,18 @@ internal class Program
         #endregion
     }
 
-    private static void WppConnect_OnAuthChange(WPPConnect.Models.Client client, string token)
+    private static void WppConnect_OnAuthAuthenticated(WPPConnect.Models.Client client)
     {
-        Console.WriteLine($"[{client.SessionName}:connectionChange] {token}");
+        Console.WriteLine($"[{client.SessionName}:login]");
+    }
+
+    private static void WppConnect_OnAuthChange(WPPConnect.Models.Client client, WPPConnect.Models.Token token)
+    {
+        Console.WriteLine($"[{client.SessionName}:connectionChange] {token.FullCode}");
 
         if (_Config.LogQrCode)
         {
-            QRCodeData qrCodeData = new QRCodeGenerator().CreateQrCode(token, QRCodeGenerator.ECCLevel.L);
+            QRCodeData qrCodeData = new QRCodeGenerator().CreateQrCode(token.FullCode, QRCodeGenerator.ECCLevel.L);
 
             AsciiQRCode qrCode = new AsciiQRCode(qrCodeData);
 
@@ -75,11 +80,6 @@ internal class Program
             Console.WriteLine();
             Console.WriteLine(qrCodeAsAsciiArt);
         }
-    }
-
-    private static void WppConnect_OnAuthLogin(WPPConnect.Models.Client client)
-    {
-        Console.WriteLine($"[{client.SessionName}:login]");
     }
 
     private static void WppConnect_OnAuthLogout(WPPConnect.Models.Client client)

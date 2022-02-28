@@ -17,15 +17,15 @@ namespace WPPConnect
 
         #region EventHandler
 
+        //Auth - Authenticated
+        public delegate void OnAuthAuthenticatedEventHandler(Models.Client client);
+
+        public event OnAuthAuthenticatedEventHandler OnAuthAuthenticated;
+
         //Auth - CodeChange
-        public delegate void OnAuthCodeChangeEventHandler(Models.Client client, string token);
+        public delegate void OnAuthCodeChangeEventHandler(Models.Client client, Models.Token token);
 
         public event OnAuthCodeChangeEventHandler OnAuthCodeChange;
-
-        //Auth - Login (Authenticated)
-        public delegate void OnAuthLoginEventHandler(Models.Client client);
-
-        public event OnAuthLoginEventHandler OnAuthLogin;
 
         //Auth - Logout
         public delegate void OnAuthLogoutEventHandler(Models.Client client);
@@ -46,6 +46,18 @@ namespace WPPConnect
 
         #region Events
 
+        private bool BrowserPage_OnAuthAuthenticated(string sessionName)
+        {
+            if (this.OnAuthAuthenticated != null)
+            {
+                Models.Client client = _Clients.Single(c => c.SessionName == sessionName);
+
+                OnAuthAuthenticated(client);
+            }
+
+            return true;
+        }
+
         private bool BrowserPage_OnAuthCodeChange(string sessionName, dynamic token)
         {
             if (token != null)
@@ -54,22 +66,10 @@ namespace WPPConnect
                 {
                     Models.Client client = _Clients.Single(c => c.SessionName == sessionName);
 
-                    string fullCode = token.fullCode;
+                    Models.Token tokenObj = client.Token().Result;
 
-                    OnAuthCodeChange(client, fullCode);
+                    OnAuthCodeChange(client, tokenObj);
                 }
-            }
-
-            return true;
-        }
-
-        private bool BrowserPage_OnAuthLogin(string sessionName)
-        {
-            if (this.OnAuthLogin != null)
-            {
-                Models.Client client = _Clients.Single(c => c.SessionName == sessionName);
-
-                OnAuthLogin(client);
             }
 
             return true;
@@ -359,20 +359,20 @@ namespace WPPConnect
                     await client.Connection.BrowserPage.EvaluateAsync("async => WPP.webpack.onReady(function () { console.log('onReady') })");
 
                     //Auth - Require
-                    //await client.Connection.BrowserPage.ExposeFunctionAsync<string, object, bool>("browserPage_OnAuthRequire", BrowserPage_OnAuthRequire);
+                    await client.Connection.BrowserPage.ExposeFunctionAsync<string, object, bool>("browserPage_OnAuthRequire", BrowserPage_OnAuthRequire);
                     await client.Connection.BrowserPage.EvaluateAsync("async => WPP.conn.on('require_auth', function(e) { console.log('require_auth') })");
 
+                    //Auth - Authenticated
+                    await client.Connection.BrowserPage.ExposeFunctionAsync<string, bool>("browserPage_OnAuthAuthenticated", BrowserPage_OnAuthAuthenticated);
+                    await client.Connection.BrowserPage.EvaluateAsync("async => WPP.conn.on('authenticated', function(e) { browserPage_OnAuthAuthenticated('" + client.SessionName + "') })");
+
                     //Auth - CodeChange
-                    //await client.Connection.BrowserPage.ExposeFunctionAsync<string, object, bool>("browserPage_OnAuthCodeChange", BrowserPage_OnAuthCodeChange);
-                    //await client.Connection.BrowserPage.EvaluateAsync("async => WPP.conn.on('auth_code_change', function(e) { console.log('auth_code_change') })");
+                    await client.Connection.BrowserPage.ExposeFunctionAsync<string, object, bool>("browserPage_OnAuthCodeChange", BrowserPage_OnAuthCodeChange);
+                    await client.Connection.BrowserPage.EvaluateAsync("async => WPP.conn.on('auth_code_change', function(e) { console.log('auth_code_change') })");
 
-                    ////Auth - Login (Authenticated)
-                    //await client.Connection.BrowserPage.ExposeFunctionAsync<string, bool>("browserPage_OnAuthLogin", BrowserPage_OnAuthLogin);
-                    //await client.Connection.BrowserPage.EvaluateAsync("async => WPP.conn.on('authenticated', function(e) { browserPage_OnAuthLogin('" + client.SessionName + "') })");
-
-                    ////Auth - Logout
-                    //await client.Connection.BrowserPage.ExposeFunctionAsync<string, bool>("browserPage_OnAuthLogout", BrowserPage_OnAuthLogout);
-                    //await client.Connection.BrowserPage.EvaluateAsync("async => WPP.conn.on('logout', function() { browserPage_OnAuthLogout('" + client.SessionName + "') })");
+                    //Auth - Logout
+                    await client.Connection.BrowserPage.ExposeFunctionAsync<string, bool>("browserPage_OnAuthLogout", BrowserPage_OnAuthLogout);
+                    await client.Connection.BrowserPage.EvaluateAsync("async => WPP.conn.on('logout', function() { browserPage_OnAuthLogout('" + client.SessionName + "') })");
 
                     //Chat - OnMessageReceived
                     //await client.Connection.BrowserPage.ExposeFunctionAsync<string, ExpandoObject, bool>("browserPage_OnMessageReceived", BrowserPage_OnMessageReceived);
@@ -388,15 +388,15 @@ namespace WPPConnect
                 if (Config.Debug)
                     Console.WriteLine($"[{sessionName}:client] Initialized");
 
-                //Models.Session session = await client.QrCode();
+                Models.Session session = await client.QrCode();
 
-                //if (session.Status == Models.Enum.Status.QrCode)
-                //{
-                //    dynamic qrCodeJson = new JObject();
-                //    qrCodeJson.fullCode = session.Mensagem;
+                if (session.Status == Models.Enum.Status.QrCode)
+                {
+                    dynamic qrCodeJson = new JObject();
+                    qrCodeJson.fullCode = session.Mensagem;
 
-                //    BrowserPage_OnAuthCodeChange(client.SessionName, qrCodeJson);
-                //}
+                    BrowserPage_OnAuthCodeChange(client.SessionName, qrCodeJson);
+                }
 
                 return client;
             }
