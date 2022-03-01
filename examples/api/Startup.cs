@@ -25,11 +25,6 @@ namespace WPPConnect.API
                     options.SerializerSettings.Converters.Add(new StringEnumConverter());
                 });
 
-            services.AddSwaggerGen(c =>
-            {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "WPPConnect.API", Version = "v1" });
-            });
-
             services.Configure<RouteOptions>(options => options.LowercaseUrls = true);
 
             services.AddSingleton<WPPConnectInstance>();
@@ -37,14 +32,9 @@ namespace WPPConnect.API
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-                app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "WPPConnect.API v1"));
-            }
+            app.UseDeveloperExceptionPage();
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
 
             app.UseRouting();
 

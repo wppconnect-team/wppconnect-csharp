@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\WPPConnect.csproj" />
+    <ProjectReference Include="..\..\src\WPPConnect.csproj" />
   </ItemGroup>
 
 </Project>

@@ -268,8 +268,6 @@ namespace WPPConnect
                     }
                     else
                     {
-                        //await new BrowserFetcher().DownloadAsync();
-
                         string[] args = new string[]
                                 {
                                   "--enable-gpu",

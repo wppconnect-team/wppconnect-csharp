@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{628DBE1B-C1E3-411B-AB1F-1D99E7926111}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{628DBE1B-C1E3-411B-AB1F-1D99E7926111}"
 	ProjectSection(SolutionItems) = preProject
 		CHANGELOG.md = CHANGELOG.md
 		README.md = README.md
@@ -19,7 +19,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WPPConnect.API", "WPPConnect.API\WPPConnect.API.csproj", "{C3276902-4F4D-460C-92CB-E7877CAD1328}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{7FB7E16E-5FD0-4DFB-9696-E7887ED97E3D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WPPConnect.API", "examples\api\WPPConnect.API.csproj", "{B6983305-2010-464B-9337-6EB58A3C52DA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,13 +37,17 @@ Global
 		{C8A98F83-E593-4D52-8C15-F37D65B5F8CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C8A98F83-E593-4D52-8C15-F37D65B5F8CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C8A98F83-E593-4D52-8C15-F37D65B5F8CF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C3276902-4F4D-460C-92CB-E7877CAD1328}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C3276902-4F4D-460C-92CB-E7877CAD1328}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C3276902-4F4D-460C-92CB-E7877CAD1328}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C3276902-4F4D-460C-92CB-E7877CAD1328}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B6983305-2010-464B-9337-6EB58A3C52DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B6983305-2010-464B-9337-6EB58A3C52DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B6983305-2010-464B-9337-6EB58A3C52DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B6983305-2010-464B-9337-6EB58A3C52DA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C8A98F83-E593-4D52-8C15-F37D65B5F8CF} = {7FB7E16E-5FD0-4DFB-9696-E7887ED97E3D}
+		{B6983305-2010-464B-9337-6EB58A3C52DA} = {7FB7E16E-5FD0-4DFB-9696-E7887ED97E3D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {0BBBECE1-F21A-4783-A6FB-940A15C7C201}
