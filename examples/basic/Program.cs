@@ -32,14 +32,14 @@ internal class Program
         wppConnect.OnAuthLogout += WppConnect_OnAuthLogout;
         
 
-        WPPConnect.Models.Client clientCreate = await wppConnect.CreateSession("Teste");
+        //WPPConnect.Models.Client clientCreate = await wppConnect.CreateSession("Teste");
 
         #region Client
 
-        WPPConnect.Models.Client client = wppConnect.Client("Teste");
+        //WPPConnect.Models.Client client = wppConnect.Client("Teste");
 
-        WPPConnect.Models.Session clientStatus = await client.Status();
-        WPPConnect.Models.Session clientQrCode = await client.QrCode();
+        //WPPConnect.Models.Session clientStatus = await client.Status();
+        //WPPConnect.Models.Session clientQrCode = await client.QrCode();
 
         //await client.SendMessage(new WPPConnect.Models.Message()
         //{
@@ -60,18 +60,18 @@ internal class Program
         #endregion
     }
 
-    private static void WppConnect_OnAuthAuthenticated(WPPConnect.Models.Client client)
+    private static void WppConnect_OnAuthAuthenticated(WPPConnect.Models.Client client, WPPConnect.Models.Token token)
     {
         Console.WriteLine($"[{client.SessionName}:login]");
     }
 
-    private static void WppConnect_OnAuthChange(WPPConnect.Models.Client client, WPPConnect.Models.Token token)
+    private static void WppConnect_OnAuthChange(WPPConnect.Models.Client client, string token)
     {
-        Console.WriteLine($"[{client.SessionName}:connectionChange] {token.FullCode}");
+        Console.WriteLine($"[{client.SessionName}:connectionChange] {token}");
 
         if (_Config.LogQrCode)
         {
-            QRCodeData qrCodeData = new QRCodeGenerator().CreateQrCode(token.FullCode, QRCodeGenerator.ECCLevel.L);
+            QRCodeData qrCodeData = new QRCodeGenerator().CreateQrCode(token, QRCodeGenerator.ECCLevel.L);
 
             AsciiQRCode qrCode = new AsciiQRCode(qrCodeData);
 

@@ -10,15 +10,12 @@
 
         public string WABrowserId { get; set; }
 
-        public string FullCode { get; set; }
-
-        public Token(string waToken1, string waToken2, string waSecretBundle, string waBrowserId, string fullCode)
+        public Token(string waToken1, string waToken2, string waSecretBundle, string waBrowserId)
         {
             WAToken1 = waToken1;
             WAToken2 = waToken2;
             WASecretBundle = waSecretBundle;
             WABrowserId = waBrowserId;
-            FullCode = fullCode;
         }
     }
 }

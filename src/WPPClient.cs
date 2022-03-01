@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json;
-
-namespace WPPConnect
+﻿namespace WPPConnect
 {
     public static class WPPClient
     {
@@ -96,11 +94,14 @@ namespace WPPConnect
 
             try
             {
-                if (session.Status == Models.Enum.Status.Desconectado)
+                if (session.Status == Models.Enum.Status.Conectado)
                 {
-                    dynamic response = await client.Connection.BrowserPage.EvaluateAsync<System.Dynamic.ExpandoObject>("async => WPP.conn.getAuthCode()");
+                    string waBrowserId = await client.Connection.BrowserPage.EvaluateAsync<string>($"async => localStorage.getItem('WABrowserId')");
+                    string waSecretBundle = await client.Connection.BrowserPage.EvaluateAsync<string>($"async => localStorage.getItem('WASecretBundle')");
+                    string waToken1 = await client.Connection.BrowserPage.EvaluateAsync<string>($"async => localStorage.getItem('WAToken1')");
+                    string waToken2 = await client.Connection.BrowserPage.EvaluateAsync<string>($"async => localStorage.getItem('WAToken2')");
 
-                    Models.Token token = new Models.Token("", "", "", response.browserId, "");
+                    Models.Token token = new Models.Token(waToken1, waToken2, waSecretBundle, waBrowserId);
 
                     return token;
                 }

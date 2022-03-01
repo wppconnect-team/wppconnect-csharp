@@ -1,4 +1,5 @@
 ﻿using Microsoft.Playwright;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RestSharp;
 using System.Dynamic;
@@ -18,12 +19,12 @@ namespace WPPConnect
         #region EventHandler
 
         //Auth - Authenticated
-        public delegate void OnAuthAuthenticatedEventHandler(Models.Client client);
+        public delegate void OnAuthAuthenticatedEventHandler(Models.Client client, Models.Token token);
 
         public event OnAuthAuthenticatedEventHandler OnAuthAuthenticated;
 
         //Auth - CodeChange
-        public delegate void OnAuthCodeChangeEventHandler(Models.Client client, Models.Token token);
+        public delegate void OnAuthCodeChangeEventHandler(Models.Client client, string token);
 
         public event OnAuthCodeChangeEventHandler OnAuthCodeChange;
 
@@ -46,13 +47,17 @@ namespace WPPConnect
 
         #region Events
 
-        private bool BrowserPage_OnAuthAuthenticated(string sessionName)
+        private async Task<bool> BrowserPage_OnAuthAuthenticated(string sessionName)
         {
             if (this.OnAuthAuthenticated != null)
             {
                 Models.Client client = _Clients.Single(c => c.SessionName == sessionName);
 
-                OnAuthAuthenticated(client);
+                Models.Token token = await client.Token();
+
+                SessionSave(client, token);
+
+                OnAuthAuthenticated(client, token);
             }
 
             return true;
@@ -66,9 +71,9 @@ namespace WPPConnect
                 {
                     Models.Client client = _Clients.Single(c => c.SessionName == sessionName);
 
-                    Models.Token tokenObj = client.Token().Result;
+                    string fullCode = token.fullCode;
 
-                    OnAuthCodeChange(client, tokenObj);
+                    OnAuthCodeChange(client, fullCode);
                 }
             }
 
@@ -84,6 +89,8 @@ namespace WPPConnect
                 client.Connection.Browser.CloseAsync();
 
                 _Clients.Remove(client);
+
+                SessionRemove(client);
 
                 OnAuthLogout(client);
             }
@@ -140,6 +147,10 @@ namespace WPPConnect
             Config = config;
 
             Start();
+
+            CheckVersion();
+
+            SessionStart();
         }
 
         #endregion
@@ -154,11 +165,9 @@ namespace WPPConnect
             Console.WriteLine(@"| |/ |/ / ____/ ____/ /___/ /_/ / / / / / / /  __/ /__/ /_  ");
             Console.WriteLine(@"|__/|__/_/   /_/    \____/\____/_/ /_/_/ /_/\___/\___/\__/  ");
             Console.WriteLine();
-
-            CheckVersion();
         }
 
-        private async void CheckVersion()
+        private async Task CheckVersion()
         {
             string versionUrl;
 
@@ -185,6 +194,44 @@ namespace WPPConnect
                 Console.WriteLine("[wa-js version:não foi possível obter a versão]");
 
             Console.WriteLine("");
+        }
+
+        private async Task SessionStart()
+        {
+            if (Config.SessionStart)
+            {
+                Console.WriteLine($"[wa-js : session starting...]");
+
+                List<string> listSessionFiles = Directory.GetFiles($"{AppDomain.CurrentDomain.BaseDirectory}\\{Config.SessionFolderName}").ToList();
+
+                foreach (string fileSession in listSessionFiles)
+                {
+                    string jsonTxt = File.ReadAllText(fileSession);
+
+                    Models.Token token = JsonConvert.DeserializeObject<Models.Token>(jsonTxt);
+
+                    string sessionName = Path.GetFileName(fileSession).Replace(Path.GetExtension(fileSession), "");
+
+                    await CreateSession(sessionName, token);
+                }
+            }
+        }
+
+        private void SessionSave(Models.Client client, Models.Token token)
+        {
+            if (Config.TokenStore == Models.Enum.TokenStore.File)
+            {
+                string tokenJson = JsonConvert.SerializeObject(token);
+
+                Directory.CreateDirectory($"{AppDomain.CurrentDomain.BaseDirectory}\\{Config.SessionFolderName}");
+
+                File.WriteAllText($"{AppDomain.CurrentDomain.BaseDirectory}{Config.SessionFolderName}\\{client.SessionName}.json", tokenJson);
+            }
+        }
+
+        private void SessionRemove(Models.Client client)
+        {
+            File.Delete($"{AppDomain.CurrentDomain.BaseDirectory}\\{Config.SessionFolderName}\\{client.SessionName}.json");
         }
 
         #endregion
@@ -363,7 +410,7 @@ namespace WPPConnect
                     await client.Connection.BrowserPage.EvaluateAsync("async => WPP.conn.on('require_auth', function(e) { console.log('require_auth') })");
 
                     //Auth - Authenticated
-                    await client.Connection.BrowserPage.ExposeFunctionAsync<string, bool>("browserPage_OnAuthAuthenticated", BrowserPage_OnAuthAuthenticated);
+                    await client.Connection.BrowserPage.ExposeFunctionAsync<string, Task<bool>>("browserPage_OnAuthAuthenticated", BrowserPage_OnAuthAuthenticated);
                     await client.Connection.BrowserPage.EvaluateAsync("async => WPP.conn.on('authenticated', function(e) { browserPage_OnAuthAuthenticated('" + client.SessionName + "') })");
 
                     //Auth - CodeChange
