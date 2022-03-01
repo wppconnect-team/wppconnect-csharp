@@ -167,7 +167,7 @@ namespace WPPConnect
             Console.WriteLine();
         }
 
-        private async Task CheckVersion()
+        private void CheckVersion()
         {
             string versionUrl;
 
@@ -180,7 +180,7 @@ namespace WPPConnect
 
             RestRequest request = new RestRequest();
 
-            RestResponse response = await client.GetAsync(request);
+            RestResponse response = client.GetAsync(request).Result;
 
             if (response.StatusCode == System.Net.HttpStatusCode.OK && !string.IsNullOrEmpty(response.Content))
             {
@@ -196,7 +196,7 @@ namespace WPPConnect
             Console.WriteLine("");
         }
 
-        private async Task SessionStart()
+        private void SessionStart()
         {
             if (Config.SessionStart)
             {
