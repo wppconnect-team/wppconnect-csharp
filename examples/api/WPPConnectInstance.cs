@@ -10,7 +10,7 @@ namespace WPPConnect.API
         {
             WPPConnect.Models.Config config = new WPPConnect.Models.Config()
             {
-                Headless = false,
+                Headless = true,
                 Version = WPPConnect.Models.Enum.LibVersion.Nightly
             };
 
