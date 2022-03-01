@@ -75,16 +75,14 @@ namespace WPPConnect
 
         private async Task BrowserPage_OnAuthLogout(string sessionName)
         {
+            Models.Client client = Client(sessionName);
+
+            await BrowserClose(client);
+
+            SessionRemove(client);
+
             if (this.OnAuthLogout != null)
             {
-                Models.Client client = Client(sessionName);
-
-                await client.Connection.Browser.CloseAsync();
-
-                _Clients.Remove(client);
-
-                SessionRemove(client);
-
                 OnAuthLogout(client);
             }
         }
@@ -137,12 +135,19 @@ namespace WPPConnect
 
             CheckVersion();
 
-            SessionStart();
+            _ = SessionStart();
         }
 
         #endregion
 
         #region Methods - Private
+
+        internal async static Task BrowserClose(Models.Client client)
+        {
+            await client.Connection.Browser.CloseAsync();
+
+            _Clients.Remove(client);
+        }
 
         private void Start()
         {
@@ -219,7 +224,8 @@ namespace WPPConnect
 
         private void SessionRemove(Models.Client client)
         {
-            File.Delete($"{AppDomain.CurrentDomain.BaseDirectory}\\{Config.SessionFolderName}\\{client.SessionName}.json");
+            if (Config.TokenStore == Models.Enum.TokenStore.File)
+                File.Delete($"{AppDomain.CurrentDomain.BaseDirectory}\\{Config.SessionFolderName}\\{client.SessionName}.json");
         }
 
         #endregion
@@ -269,7 +275,6 @@ namespace WPPConnect
                                   "--enable-gpu",
                                   "--display-entrypoints",
                                   "--disable-http-cache",
-                                  "no-sandbox",
                                   "--no-sandbox",
                                   "--disable-setuid-sandbox",
                                   "--disable-2d-canvas-clip-aa",
@@ -305,6 +310,7 @@ namespace WPPConnect
                                   "--disable-infobars",
                                   "--disable-ipc-flooding-protection",
                                   "--disable-notifications",
+                                  "--disable-popup-blocking",
                                   "--disable-renderer-backgrounding",
                                   "--disable-session-crashed-bubble",
                                   "--disable-setuid-sandbox",
@@ -390,8 +396,6 @@ namespace WPPConnect
                     #endregion
 
                     #region Events
-
-                    await client.Connection.BrowserPage.EvaluateAsync("async => WPP.webpack.onReady(function () { console.log('onReady') })");
 
                     //Auth - Require
                     await client.Connection.BrowserPage.ExposeFunctionAsync<string, object, Task>("browserPage_OnAuthRequire", BrowserPage_OnAuthRequire);

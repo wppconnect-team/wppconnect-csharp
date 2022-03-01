@@ -12,26 +12,17 @@ internal class Program
         //Config
         _Config = new WPPConnect.Models.Config()
         {
-            Headless = false,
+            Headless = true,
             Version = WPPConnect.Models.Enum.LibVersion.Nightly
         };
 
         WPPConnect.WPPConnection wppConnect = new WPPConnect.WPPConnection(_Config);
 
-        #region Tokens
-
-        //Token
-        //string token = File.ReadAllText(@"C:\Users\Rener\Desktop\Teste.json");
-        //WPPConnect.Models.Token tokenObj = JsonConvert.DeserializeObject<WPPConnect.Models.Token>(token);
-        //WPPConnect.Models.Session session = await wppConnect.CreateSession("Teste", tokenObj);
-
-        #endregion
-
         wppConnect.OnAuthCodeChange += WppConnect_OnAuthChange;
         wppConnect.OnAuthAuthenticated += WppConnect_OnAuthAuthenticated;
         wppConnect.OnAuthLogout += WppConnect_OnAuthLogout;
         
-        //WPPConnect.Models.Client clientCreate = await wppConnect.CreateSession("Teste");
+        WPPConnect.Models.Client clientCreate = await wppConnect.CreateSession("Teste");
 
         #region Client
 
