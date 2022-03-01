@@ -98,7 +98,7 @@ namespace WPPConnect
             return true;
         }
 
-        private bool BrowserPage_OnAuthRequire(string sessionName, object token)
+        private bool BrowserPage_OnAuthRequire(string sessionName, dynamic token)
         {
             if (token != null)
             {
@@ -106,9 +106,9 @@ namespace WPPConnect
                 {
                     Models.Client client = _Clients.Single(c => c.SessionName == sessionName);
 
-                    //string fullCode = token.fullCode;
+                    string fullCode = token.fullCode;
 
-                    //OnAuthRequire(client, fullCode);
+                    OnAuthRequire(client, fullCode);
                 }
             }
 
@@ -200,7 +200,7 @@ namespace WPPConnect
         {
             if (Config.SessionStart)
             {
-                Console.WriteLine($"[wa-js : session starting...]");
+                Console.WriteLine($"[wa-js : Sessions Starting]");
 
                 List<string> listSessionFiles = Directory.GetFiles($"{AppDomain.CurrentDomain.BaseDirectory}\\{Config.SessionFolderName}").ToList();
 
