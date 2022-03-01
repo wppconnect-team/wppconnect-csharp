@@ -16,7 +16,9 @@
 
         public bool LogQrCode { get; set; } = true;
 
-        public string TokenFolderName { get; set; } = "tokens";
+        public bool SessionStart { get; set; } = true;
+
+        public string SessionFolderName { get; set; } = "sessions";
 
         public Enum.TokenStore TokenStore { get; set; } = Enum.TokenStore.File;
 
