@@ -105,12 +105,12 @@
 
                     return token;
                 }
-
-                return null;
+                else
+                    return null;
             }
             catch (Exception)
             {
-                return null;
+                throw new Exception("Ocorreu um erro ao obter o token");
             }
         }
 

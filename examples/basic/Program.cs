@@ -31,7 +31,6 @@ internal class Program
         wppConnect.OnAuthAuthenticated += WppConnect_OnAuthAuthenticated;
         wppConnect.OnAuthLogout += WppConnect_OnAuthLogout;
         
-
         //WPPConnect.Models.Client clientCreate = await wppConnect.CreateSession("Teste");
 
         #region Client
