@@ -399,7 +399,7 @@ namespace WPPConnect
 
                     //Auth - CodeChange
                     await client.Connection.BrowserPage.ExposeFunctionAsync<string, object, Task>("browserPage_OnAuthCodeChange", BrowserPage_OnAuthCodeChange);
-                    await client.Connection.BrowserPage.EvaluateAsync("async => WPP.conn.on('auth_code_change', function(e) { console.log('auth_code_change') })");
+                    await client.Connection.BrowserPage.EvaluateAsync("async => WPP.conn.on('auth_code_change', function(e) { browserPage_OnAuthCodeChange('" + client.SessionName + "', e) })");
 
                     //Auth - Logout
                     await client.Connection.BrowserPage.ExposeFunctionAsync<string, Task>("browserPage_OnAuthLogout", BrowserPage_OnAuthLogout);
