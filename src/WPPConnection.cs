@@ -189,6 +189,8 @@ namespace WPPConnect
                 Console.WriteLine($"[wa-js : Sessions Starting]");
                 Console.WriteLine();
 
+                Directory.CreateDirectory($"{AppDomain.CurrentDomain.BaseDirectory}\\{Config.SessionFolderName}");
+
                 List<string> listSessionFiles = Directory.GetFiles($"{AppDomain.CurrentDomain.BaseDirectory}\\{Config.SessionFolderName}").ToList();
 
                 foreach (string fileSession in listSessionFiles)
