@@ -201,7 +201,7 @@ namespace WPPConnect
 
                     string sessionName = Path.GetFileName(fileSession).Replace(Path.GetExtension(fileSession), "");
 
-                    CreateSession(sessionName, token).Wait();
+                    SessionCreate(sessionName, token).Wait();
                 }
             }
         }
@@ -228,7 +228,7 @@ namespace WPPConnect
 
         #region Methods - Public
 
-        public async Task<Models.Client> CreateSession(string sessionName, Models.Token? token = null)
+        public async Task<Models.Client> SessionCreate(string sessionName, Models.Token? token = null)
         {
             try
             {
@@ -352,6 +352,18 @@ namespace WPPConnect
                         IBrowser browser = await playwrightBrowser.LaunchAsync(launchOptions);
 
                         client = new Models.Client(sessionName, browser);
+
+                        //BrowserTypeLaunchPersistentContextOptions launchOptions = new BrowserTypeLaunchPersistentContextOptions
+                        //{
+                        //    Args = Config.Headless == true ? args : new string[0],
+                        //    Headless = Config.Headless,
+                        //    Devtools = Config.Devtools,
+                        //    Channel = "chrome"
+                        //};
+
+                        //IBrowserContext browserContext = await playwrightBrowser.LaunchPersistentContextAsync(sessionName, launchOptions);
+
+                        //client = new Models.Client(sessionName, browserContext.Browser);
                     }
 
                     if (Config.Debug)
@@ -437,6 +449,13 @@ namespace WPPConnect
             {
                 throw;
             }
+        }
+
+        public async Task SessionRemove(string sessionName)
+        {
+            Models.Client client = await Client(sessionName);
+
+            BrowserClose(client);
         }
 
         public async Task<Models.Client> Client(string sessionName)
