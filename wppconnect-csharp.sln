@@ -5,7 +5,6 @@ VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{628DBE1B-C1E3-411B-AB1F-1D99E7926111}"
 	ProjectSection(SolutionItems) = preProject
-		CHANGELOG.md = CHANGELOG.md
 		INSTALL.md = INSTALL.md
 		README.md = README.md
 		TODO.md = TODO.md

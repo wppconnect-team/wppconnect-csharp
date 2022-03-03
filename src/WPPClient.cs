@@ -52,8 +52,11 @@
 
                 return session;
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                session.Status = Models.Enum.Status.ERROR;
+                session.Mensagem = e.Message;
+
                 return session;
             }
         }
@@ -81,7 +84,7 @@
             }
             catch (Exception e)
             {
-                session.Status = Models.Enum.Status.Desconectado;
+                session.Status = Models.Enum.Status.ERROR;
                 session.Mensagem = e.Message;
 
                 return session;
@@ -131,7 +134,7 @@
             }
             catch (Exception)
             {
-                return false;
+                throw;
             }
         }
     }

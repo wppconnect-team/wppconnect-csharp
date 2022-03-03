@@ -16,50 +16,29 @@ namespace WPPConnect
 
         #endregion
 
-        #region EventHandler
+        #region Events
 
         //Auth - Authenticated
         public delegate void OnAuthAuthenticatedEventHandler(Models.Client client, Models.Token token);
 
         public event OnAuthAuthenticatedEventHandler OnAuthAuthenticated;
 
+        private async Task BrowserPage_OnAuthAuthenticated(string sessionName)
+        {
+            Models.Client client = _Clients.Single(c => c.SessionName == sessionName);
+
+            Models.Token token = await client.Token();
+
+            SessionSave(client, token);
+
+            if (this.OnAuthAuthenticated != null)
+                OnAuthAuthenticated(client, token);
+        }
+
         //Auth - CodeChange
         public delegate void OnAuthCodeChangeEventHandler(Models.Client client, string token);
 
         public event OnAuthCodeChangeEventHandler OnAuthCodeChange;
-
-        //Auth - Logout
-        public delegate void OnAuthLogoutEventHandler(Models.Client client);
-
-        public event OnAuthLogoutEventHandler OnAuthLogout;
-
-        //Auth - Require
-        public delegate void OnAuthRequireEventHandler(Models.Client client, string token);
-
-        public event OnAuthRequireEventHandler OnAuthRequire;
-
-        //Chat - OnMessageReceived
-        public delegate void OnMessageReceivedEventHandler(Models.Client client, Models.Message message);
-
-        public event OnMessageReceivedEventHandler OnMessageReceived;
-
-        #endregion
-
-        #region Events
-
-        private async Task BrowserPage_OnAuthAuthenticated(string sessionName)
-        {
-            if (this.OnAuthAuthenticated != null)
-            {
-                Models.Client client = _Clients.Single(c => c.SessionName == sessionName);
-
-                Models.Token token = await client.Token();
-
-                SessionSave(client, token);
-
-                OnAuthAuthenticated(client, token);
-            }
-        }
 
         private async Task BrowserPage_OnAuthCodeChange(string sessionName, dynamic token)
         {
@@ -73,11 +52,16 @@ namespace WPPConnect
             }
         }
 
+        //Auth - Logout
+        public delegate void OnAuthLogoutEventHandler(Models.Client client);
+
+        public event OnAuthLogoutEventHandler OnAuthLogout;
+
         private async Task BrowserPage_OnAuthLogout(string sessionName)
         {
-            Models.Client client = Client(sessionName);
+            Models.Client client = await Client(sessionName);
 
-            await BrowserClose(client);
+            BrowserClose(client);
 
             SessionRemove(client);
 
@@ -86,6 +70,11 @@ namespace WPPConnect
                 OnAuthLogout(client);
             }
         }
+
+        //Auth - Require
+        public delegate void OnAuthRequireEventHandler(Models.Client client, string token);
+
+        public event OnAuthRequireEventHandler OnAuthRequire;
 
         private async Task BrowserPage_OnAuthRequire(string sessionName, dynamic token)
         {
@@ -98,6 +87,11 @@ namespace WPPConnect
                 OnAuthRequire(client, fullCode);
             }
         }
+
+        //Chat - OnMessageReceived
+        public delegate void OnMessageReceivedEventHandler(Models.Client client, Models.Message message);
+
+        public event OnMessageReceivedEventHandler OnMessageReceived;
 
         private async Task BrowserPage_OnMessageReceived(string sessionName, ExpandoObject message)
         {
@@ -135,19 +129,12 @@ namespace WPPConnect
 
             CheckVersion();
 
-            _ = SessionStart();
+            SessionStart();
         }
 
         #endregion
 
         #region Methods - Private
-
-        internal async static Task BrowserClose(Models.Client client)
-        {
-            await client.Connection.Browser.CloseAsync();
-
-            _Clients.Remove(client);
-        }
 
         private void Start()
         {
@@ -188,7 +175,14 @@ namespace WPPConnect
             Console.WriteLine("");
         }
 
-        private async Task SessionStart()
+        private void BrowserClose(Models.Client client)
+        {
+            client.Connection.Browser.CloseAsync();
+
+            _Clients.Remove(client);
+        }
+
+        private void SessionStart()
         {
             if (Config.SessionStart)
             {
@@ -205,7 +199,7 @@ namespace WPPConnect
 
                     string sessionName = Path.GetFileName(fileSession).Replace(Path.GetExtension(fileSession), "");
 
-                    await CreateSession(sessionName, token);
+                    CreateSession(sessionName, token).Wait();
                 }
             }
         }
@@ -396,8 +390,8 @@ namespace WPPConnect
                     #region Events
 
                     //Auth - Require
-                    await client.Connection.BrowserPage.ExposeFunctionAsync<string, object, Task>("browserPage_OnAuthRequire", BrowserPage_OnAuthRequire);
-                    await client.Connection.BrowserPage.EvaluateAsync("async => WPP.conn.on('require_auth', function(e) { console.log('require_auth') })");
+                    //await client.Connection.BrowserPage.ExposeFunctionAsync<string, object, Task>("browserPage_OnAuthRequire", BrowserPage_OnAuthRequire);
+                    //await client.Connection.BrowserPage.EvaluateAsync("async => WPP.conn.on('require_auth', function(e) { console.log('require_auth') })");
 
                     //Auth - Authenticated
                     await client.Connection.BrowserPage.ExposeFunctionAsync<string, Task>("browserPage_OnAuthAuthenticated", BrowserPage_OnAuthAuthenticated);
@@ -443,7 +437,7 @@ namespace WPPConnect
             }
         }
 
-        public Models.Client Client(string sessionName)
+        public async Task<Models.Client> Client(string sessionName)
         {
             Models.Client client = _Clients.SingleOrDefault(c => c.SessionName == sessionName);
 
