@@ -185,9 +185,15 @@ namespace WPPConnect
 
         private void BrowserClose(Models.Client client)
         {
+            Console.WriteLine($"[{client.SessionName}:browser] Closing Browser");
+
             client.Connection.Browser.CloseAsync();
 
+            Console.WriteLine($"[{client.SessionName}:client] Closing Session");
+
             _Clients.Remove(client);
+
+            Console.WriteLine($"[{client.SessionName}:client] Closed");
         }
 
         private void SessionStart()
@@ -211,6 +217,9 @@ namespace WPPConnect
 
                     SessionCreate(sessionName, token).Wait();
                 }
+
+                Console.WriteLine($"[wa-js : Sessions Started]");
+                Console.WriteLine();
             }
         }
 
@@ -262,7 +271,7 @@ namespace WPPConnect
                 if (client == null)
                 {
                     if (Config.Debug)
-                        Console.WriteLine($"[{sessionName}:browser] Initializing browser...");
+                        Console.WriteLine($"[{sessionName}:browser] Initializing Browser");
 
                     if (!string.IsNullOrEmpty(Config.BrowserWsUrl))
                     {
@@ -374,8 +383,7 @@ namespace WPPConnect
                         //client = new Models.Client(sessionName, browserContext.Browser);
                     }
 
-                    if (Config.Debug)
-                        Console.WriteLine($"[{client.SessionName}:client] Initializing...");
+                    Console.WriteLine($"[{client.SessionName}:client] Initializing Session");
 
                     client.Connection.BrowserPage = await client.Connection.Browser.NewPageAsync(new BrowserNewPageOptions()
                     {
@@ -438,8 +446,7 @@ namespace WPPConnect
                 else
                     throw new Exception($"Já existe uma session com o nome {sessionName}");
 
-                if (Config.Debug)
-                    Console.WriteLine($"[{sessionName}:client] Initialized");
+                Console.WriteLine($"[{sessionName}:client] Initialized");
 
                 Models.Session session = await client.QrCode();
 
