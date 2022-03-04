@@ -4,8 +4,8 @@
     {
         public string Id { get; set; }
 
-        public string Body { get; set; }
+        public string Content { get; set; }
 
-        public string From { get; set; }
+        public string Number { get; set; }
     }
 }

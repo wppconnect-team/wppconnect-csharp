@@ -1,4 +1,6 @@
-﻿namespace WPPConnect
+﻿using WPPConnect.Utils;
+
+namespace WPPConnect
 {
     public static class WPPClient
     {
@@ -125,7 +127,9 @@
 
                 if (session.Status == Models.Enum.Status.Conectado)
                 {
-                    await client.Connection.BrowserPage.EvaluateAsync("async => WPP.chat.sendTextMessage('5564992176420@c.us', '{}', { createChat: true })");
+                    message.Validate();
+
+                    await client.Connection.BrowserPage.EvaluateAsync("async => WPP.chat.sendTextMessage('" + message.Number + "@c.us', '" + message.Content + "', { createChat: true })");
 
                     return true;
                 }

@@ -104,8 +104,8 @@ namespace WPPConnect
                 Models.Message messageObj = new Models.Message()
                 {
                     Id = response.id.id,
-                    Body = response.body,
-                    From = response.from.Substring(0, response.from.IndexOf('@'))
+                    Content = response.body,
+                    Number = response.from.Substring(0, response.from.IndexOf('@'))
                 };
 
                 OnMessageReceived(client, messageObj);
@@ -418,6 +418,15 @@ namespace WPPConnect
 
                     #endregion
 
+                    bool mainLoaded = await client.Connection.BrowserPage.EvaluateAsync<bool>("async => WPP.conn.isMainLoaded()");
+
+                    if (!mainLoaded && token != null)
+                    {
+                        BrowserClose(client);
+
+                        return await SessionCreate(client.SessionName);
+                    }
+
                     #region Events
 
                     //Auth - Require
@@ -462,9 +471,9 @@ namespace WPPConnect
 
                 return client;
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                throw;
+                throw new Exception(e.Message);
             }
         }
 
