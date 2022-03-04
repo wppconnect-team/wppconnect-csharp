@@ -61,7 +61,7 @@
             }
         }
 
-        public static async Task<Models.Session> Disconnect(this Models.Client client)
+        public static async Task<Models.Session> Logout(this Models.Client client)
         {
             Models.Session session = await Status(client);
 
@@ -71,7 +71,7 @@
                 {
                     bool logout = await client.Connection.BrowserPage.EvaluateAsync<bool>("async => WPP.conn.logout()");
 
-                    await Disconnect(client);
+                    await Logout(client);
 
                     session.Status = Models.Enum.Status.Desconectado;
 

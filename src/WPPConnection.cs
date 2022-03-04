@@ -148,31 +148,39 @@ namespace WPPConnect
 
         private void CheckVersion()
         {
-            string versionUrl;
-
-            if (Config.Version == Models.Enum.LibVersion.Latest)
-                versionUrl = "https://api.github.com/repos/wppconnect-team/wa-js/releases/latest";
-            else
-                versionUrl = "https://api.github.com/repos/wppconnect-team/wa-js/releases/tags/nightly";
-
-            RestClient client = new RestClient(versionUrl);
-
-            RestRequest request = new RestRequest();
-
-            RestResponse response = client.GetAsync(request).Result;
-
-            if (response.StatusCode == System.Net.HttpStatusCode.OK && !string.IsNullOrEmpty(response.Content))
+            try
             {
-                JObject json = JObject.Parse(response.Content);
+                string versionUrl;
 
-                string version = (string)json["name"];
+                if (Config.Version == Models.Enum.LibVersion.Latest)
+                    versionUrl = "https://api.github.com/repos/wppconnect-team/wa-js/releases/latest";
+                else
+                    versionUrl = "https://api.github.com/repos/wppconnect-team/wa-js/releases/tags/nightly";
 
-                Console.WriteLine($"[wa-js : {version}]");
+                RestClient client = new RestClient(versionUrl);
+
+                RestRequest request = new RestRequest();
+                request.Timeout = 5000;
+
+                RestResponse response = client.GetAsync(request).Result;
+
+                if (response.StatusCode == System.Net.HttpStatusCode.OK && !string.IsNullOrEmpty(response.Content))
+                {
+                    JObject json = JObject.Parse(response.Content);
+
+                    string version = (string)json["name"];
+
+                    Console.WriteLine($"[wa-js : {version}]");
+                }
+                else
+                    throw new Exception("[wa-js version:não foi possível obter a versão]");
+
+                Console.WriteLine("");
             }
-            else
-                Console.WriteLine("[wa-js version:não foi possível obter a versão]");
-
-            Console.WriteLine("");
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
         }
 
         private void BrowserClose(Models.Client client)
