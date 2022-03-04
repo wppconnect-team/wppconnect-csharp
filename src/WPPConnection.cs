@@ -194,6 +194,7 @@ namespace WPPConnect
             _Clients.Remove(client);
 
             Console.WriteLine($"[{client.SessionName}:client] Closed");
+            Console.WriteLine();
         }
 
         private void SessionStart()
@@ -447,6 +448,7 @@ namespace WPPConnect
                     throw new Exception($"Já existe uma session com o nome {sessionName}");
 
                 Console.WriteLine($"[{sessionName}:client] Initialized");
+                Console.WriteLine();
 
                 Models.Session session = await client.QrCode();
 
