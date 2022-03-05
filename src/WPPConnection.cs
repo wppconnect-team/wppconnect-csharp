@@ -271,8 +271,7 @@ namespace WPPConnect
 
                 if (client == null)
                 {
-                    if (Config.Debug)
-                        Console.WriteLine($"[{sessionName}:browser] Initializing Browser");
+                    Console.WriteLine($"[{sessionName}:browser] Initializing");
 
                     if (!string.IsNullOrEmpty(Config.BrowserWsUrl))
                     {
@@ -384,13 +383,15 @@ namespace WPPConnect
                         //client = new Models.Client(sessionName, browserContext.Browser);
                     }
 
-                    Console.WriteLine($"[{client.SessionName}:client] Initializing Session");
-
                     client.Connection.BrowserPage = await client.Connection.Browser.NewPageAsync(new BrowserNewPageOptions()
                     {
                         BypassCSP = true,
                         UserAgent = "WhatsApp/2.2043.8 Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36"
                     });
+
+                    Console.WriteLine($"[{sessionName}:browser] Initialized");
+
+                    Console.WriteLine($"[{client.SessionName}:client] Initializing");
 
                     await client.Connection.BrowserPage.GotoAsync("https://web.whatsapp.com");
 
@@ -430,8 +431,8 @@ namespace WPPConnect
                     #region Events
 
                     //Auth - Require
-                    //await client.Connection.BrowserPage.ExposeFunctionAsync<string, object, Task>("browserPage_OnAuthRequire", BrowserPage_OnAuthRequire);
-                    //await client.Connection.BrowserPage.EvaluateAsync("async => WPP.conn.on('require_auth', function(e) { console.log('require_auth') })");
+                    await client.Connection.BrowserPage.ExposeFunctionAsync<string, object, Task>("browserPage_OnAuthRequire", BrowserPage_OnAuthRequire);
+                    await client.Connection.BrowserPage.EvaluateAsync("async => WPP.conn.on('require_auth', function(e) { browserPage_OnAuthRequire('" + client.SessionName + "') })");
 
                     //Auth - Authenticated
                     await client.Connection.BrowserPage.ExposeFunctionAsync<string, Task>("browserPage_OnAuthAuthenticated", BrowserPage_OnAuthAuthenticated);
