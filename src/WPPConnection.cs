@@ -1,6 +1,5 @@
-﻿using Microsoft.Playwright;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
+using PuppeteerSharp;
 using RestSharp;
 using System.Dynamic;
 
@@ -185,7 +184,7 @@ namespace WPPConnect
 
         private void BrowserClose(Models.Client client)
         {
-            client.Connection.BrowserContext.Pages[0].CloseAsync();
+            client.Connection.BrowserContext.PagesAsync().Result.FirstOrDefault().CloseAsync();
             client.Connection.BrowserContext.CloseAsync();
 
             Console.WriteLine($"[{client.SessionName}:browser] Closed");
@@ -234,23 +233,6 @@ namespace WPPConnect
         {
             try
             {
-                IPlaywright playwright = await Playwright.CreateAsync();
-
-                IBrowserType playwrightBrowser = playwright.Chromium;
-
-                switch (Config.Browser)
-                {
-                    case Models.Enum.Browser.Chromium:
-                        playwrightBrowser = playwright.Chromium;
-                        break;
-                    case Models.Enum.Browser.Firefox:
-                        playwrightBrowser = playwright.Firefox;
-                        break;
-                    case Models.Enum.Browser.Webkit:
-                        playwrightBrowser = playwright.Webkit;
-                        break;
-                }
-
                 Models.Client client = _Clients.SingleOrDefault(i => i.SessionName == sessionName);
 
                 if (client == null)
@@ -259,19 +241,19 @@ namespace WPPConnect
 
                     if (!string.IsNullOrEmpty(Config.BrowserWsUrl))
                     {
-                        BrowserTypeConnectOverCDPOptions browserTypeConnectOptions = new BrowserTypeConnectOverCDPOptions()
+                        ConnectOptions connectOptions = new ConnectOptions
                         {
-                            Timeout = 5000
+                            BrowserWSEndpoint = Config.BrowserWsUrl
                         };
 
-                        IBrowser browser = await playwrightBrowser.ConnectOverCDPAsync(Config.BrowserWsUrl);
+                        Browser browser = await Puppeteer.ConnectAsync(connectOptions);
 
-                        IBrowserContext browserContext = browser.Contexts[0];
-
-                        client = new Models.Client(sessionName, browserContext);
+                        client = new Models.Client(sessionName, browser);
                     }
                     else
                     {
+                        await new BrowserFetcher().DownloadAsync();
+
                         string[] args = new string[]
                                 {
                                   "--enable-gpu",
@@ -349,41 +331,42 @@ namespace WPPConnect
                                   "--unhandled-rejections=strict",
                                   "--window-position=0,0" };
 
-                        BrowserTypeLaunchPersistentContextOptions launchOptions = new BrowserTypeLaunchPersistentContextOptions
+                        LaunchOptions launchOptions = new LaunchOptions
                         {
                             Args = Config.Headless == true ? args : new string[0],
                             Headless = Config.Headless,
                             Devtools = Config.Devtools,
-                            Channel = "chrome",
-                            BypassCSP = true,
-                            UserAgent = "WhatsApp/2.2043.8 Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36"
+                            DefaultViewport = new ViewPortOptions
+                            {
+                                Width = 1920,
+                                Height = 1080
+                            },
+                            UserDataDir = $"{AppDomain.CurrentDomain.BaseDirectory}\\{Config.SessionFolderName}\\{sessionName}"
                         };
 
-                        IBrowserContext browserContext = await playwrightBrowser.LaunchPersistentContextAsync($"{AppDomain.CurrentDomain.BaseDirectory}\\{Config.SessionFolderName}\\{sessionName}", launchOptions);
+                        Browser browser = await Puppeteer.LaunchAsync(launchOptions);
 
-                        client = new Models.Client(sessionName, browserContext);
+                        client = new Models.Client(sessionName, browser);
                     }
 
                     Console.WriteLine($"[{sessionName}:browser] Initialized");
 
                     Console.WriteLine($"[{client.SessionName}:client] Initializing");
 
-                    await client.Connection.BrowserPage.GotoAsync("https://web.whatsapp.com");
+                    await client.Connection.BrowserPage.SetUserAgentAsync("WhatsApp/2.2043.8 Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36");
+
+                    await client.Connection.BrowserPage.SetBypassCSPAsync(true);
+
+                    client.Connection.BrowserPage.DOMContentLoaded += BrowserPage_DOMContentLoaded;
+
+                    await client.Connection.BrowserPage.GoToAsync("https://web.whatsapp.com");
 
                     #region Inject
 
-                    PageAddScriptTagOptions pageAddScriptTagOptions = new PageAddScriptTagOptions();
-
-                    if (Config.Version == Models.Enum.LibVersion.Latest)
-                        pageAddScriptTagOptions.Url = "https://github.com/wppconnect-team/wa-js/releases/latest/download/wppconnect-wa.js";
-                    if (Config.Version == Models.Enum.LibVersion.Nightly)
-                        pageAddScriptTagOptions.Url = "https://github.com/wppconnect-team/wa-js/releases/download/nightly/wppconnect-wa.js";
-
-                    await client.Connection.BrowserPage.AddScriptTagAsync(pageAddScriptTagOptions);
 
                     #endregion
 
-                    bool mainLoaded = await client.Connection.BrowserPage.EvaluateAsync<bool>("async => WPP.conn.isMainLoaded()");
+                    bool mainLoaded = await client.Connection.BrowserPage.EvaluateFunctionAsync<bool>("async => WPP.conn.isMainLoaded()");
 
                     if (!mainLoaded && token)
                     {
@@ -400,23 +383,23 @@ namespace WPPConnect
 
                     //Auth - Require
                     await client.Connection.BrowserPage.ExposeFunctionAsync<string, object, Task>("browserPage_OnAuthRequire", BrowserPage_OnAuthRequire);
-                    await client.Connection.BrowserPage.EvaluateAsync("async => WPP.conn.on('require_auth', function(e) { browserPage_OnAuthRequire('" + client.SessionName + "') })");
+
 
                     //Auth - Authenticated
                     await client.Connection.BrowserPage.ExposeFunctionAsync<string, Task>("browserPage_OnAuthAuthenticated", BrowserPage_OnAuthAuthenticated);
-                    await client.Connection.BrowserPage.EvaluateAsync("async => WPP.conn.on('authenticated', function(e) { browserPage_OnAuthAuthenticated('" + client.SessionName + "') })");
+                    await client.Connection.BrowserPage.EvaluateFunctionAsync("async => WPP.conn.on('authenticated', function(e) { browserPage_OnAuthAuthenticated('" + client.SessionName + "') })");
 
                     //Auth - CodeChange
                     await client.Connection.BrowserPage.ExposeFunctionAsync<string, object, Task>("browserPage_OnAuthCodeChange", BrowserPage_OnAuthCodeChange);
-                    await client.Connection.BrowserPage.EvaluateAsync("async => WPP.conn.on('auth_code_change', function(e) { browserPage_OnAuthCodeChange('" + client.SessionName + "', e) })");
+                    await client.Connection.BrowserPage.EvaluateFunctionAsync("async => WPP.conn.on('auth_code_change', function(e) { browserPage_OnAuthCodeChange('" + client.SessionName + "', e) })");
 
                     //Auth - Logout
                     await client.Connection.BrowserPage.ExposeFunctionAsync<string, Task>("browserPage_OnAuthLogout", BrowserPage_OnAuthLogout);
-                    await client.Connection.BrowserPage.EvaluateAsync("async => WPP.conn.on('logout', function() { browserPage_OnAuthLogout('" + client.SessionName + "') })");
+                    await client.Connection.BrowserPage.EvaluateFunctionAsync("async => WPP.conn.on('logout', function() { browserPage_OnAuthLogout('" + client.SessionName + "') })");
 
                     //Chat - OnMessageReceived
                     await client.Connection.BrowserPage.ExposeFunctionAsync<string, ExpandoObject, Task>("browserPage_OnMessageReceived", BrowserPage_OnMessageReceived);
-                    await client.Connection.BrowserPage.EvaluateAsync("async => WPP.whatsapp.MsgStore.on('change', function(e) { browserPage_OnMessageReceived('" + client.SessionName + "', e) })");
+                    await client.Connection.BrowserPage.EvaluateFunctionAsync("async => WPP.whatsapp.MsgStore.on('change', function(e) { browserPage_OnMessageReceived('" + client.SessionName + "', e) })");
 
                     #endregion
 
@@ -444,6 +427,15 @@ namespace WPPConnect
             {
                 throw new Exception(e.Message);
             }
+        }
+
+        private void BrowserPage_DOMContentLoaded(object? sender, EventArgs e)
+        {
+            Page page = (Page)sender;
+
+            page.AddScriptTagAsync("https://github.com/wppconnect-team/wa-js/releases/download/nightly/wppconnect-wa.js");
+
+            page.EvaluateFunctionAsync("async => WPP.conn.on('require_auth', function(e) { console.log('require_auth') })");
         }
 
         public async Task SessionRemove(string sessionName)

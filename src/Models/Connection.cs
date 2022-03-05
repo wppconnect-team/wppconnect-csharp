@@ -1,17 +1,17 @@
-﻿using Microsoft.Playwright;
+﻿using PuppeteerSharp;
 
 namespace WPPConnect.Models
 {
     public class Connection
     {
-        public IPage BrowserPage { get; set; }
+        public Page BrowserPage { get; set; }
 
-        public IBrowserContext BrowserContext { get; set; }
+        public Browser BrowserContext { get; set; }
 
-        public Connection(IBrowserContext browser)
+        public Connection(Browser browser)
         {
             BrowserContext = browser;
-            BrowserPage = browser.Pages[0];
+            BrowserPage = browser.PagesAsync().Result.FirstOrDefault() == null ? browser.NewPageAsync().Result : browser.PagesAsync().Result.First();
         }
     }
 }

@@ -10,7 +10,7 @@ namespace WPPConnect
 
             try
             {
-                bool authenticated = await client.Connection.BrowserPage.EvaluateAsync<bool>("async => WPP.conn.isAuthenticated()");
+                bool authenticated = await client.Connection.BrowserPage.EvaluateFunctionAsync<bool>("async => WPP.conn.isAuthenticated()");
 
                 if (authenticated)
                 {
@@ -42,7 +42,7 @@ namespace WPPConnect
             {
                 if (session.Status == Models.Enum.Status.Desconectado)
                 {
-                    dynamic response = await client.Connection.BrowserPage.EvaluateAsync<System.Dynamic.ExpandoObject>("async => WPP.conn.getAuthCode()");
+                    dynamic response = await client.Connection.BrowserPage.EvaluateFunctionAsync<System.Dynamic.ExpandoObject>("async => WPP.conn.getAuthCode()");
 
                     string fullCode = response.fullCode;
 
@@ -71,7 +71,7 @@ namespace WPPConnect
             {
                 if (session.Status == Models.Enum.Status.Conectado)
                 {
-                    bool logout = await client.Connection.BrowserPage.EvaluateAsync<bool>("async => WPP.conn.logout()");
+                    bool logout = await client.Connection.BrowserPage.EvaluateFunctionAsync<bool>("async => WPP.conn.logout()");
 
                     await Logout(client);
 
@@ -101,10 +101,10 @@ namespace WPPConnect
             {
                 if (session.Status == Models.Enum.Status.Conectado)
                 {
-                    string waBrowserId = await client.Connection.BrowserPage.EvaluateAsync<string>($"async => localStorage.getItem('WABrowserId')");
-                    string waSecretBundle = await client.Connection.BrowserPage.EvaluateAsync<string>($"async => localStorage.getItem('WASecretBundle')");
-                    string waToken1 = await client.Connection.BrowserPage.EvaluateAsync<string>($"async => localStorage.getItem('WAToken1')");
-                    string waToken2 = await client.Connection.BrowserPage.EvaluateAsync<string>($"async => localStorage.getItem('WAToken2')");
+                    string waBrowserId = await client.Connection.BrowserPage.EvaluateFunctionAsync<string>($"async => localStorage.getItem('WABrowserId')");
+                    string waSecretBundle = await client.Connection.BrowserPage.EvaluateFunctionAsync<string>($"async => localStorage.getItem('WASecretBundle')");
+                    string waToken1 = await client.Connection.BrowserPage.EvaluateFunctionAsync<string>($"async => localStorage.getItem('WAToken1')");
+                    string waToken2 = await client.Connection.BrowserPage.EvaluateFunctionAsync<string>($"async => localStorage.getItem('WAToken2')");
 
                     Models.Token token = new Models.Token(waToken1, waToken2, waSecretBundle, waBrowserId);
 
@@ -129,7 +129,7 @@ namespace WPPConnect
                 {
                     message.Validate();
 
-                    await client.Connection.BrowserPage.EvaluateAsync("async => WPP.chat.sendTextMessage('" + message.Number + "@c.us', '" + message.Content + "', { createChat: true })");
+                    await client.Connection.BrowserPage.EvaluateFunctionAsync("async => WPP.chat.sendTextMessage('" + message.Number + "@c.us', '" + message.Content + "', { createChat: true })");
 
                     return true;
                 }
