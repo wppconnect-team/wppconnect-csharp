@@ -8,7 +8,7 @@ namespace WPPConnect.Models
 
         public Models.Connection Connection { get; set; }
 
-        public Client(string sessionName, IBrowser browser)
+        public Client(string sessionName, IBrowserContext browser)
         {
             SessionName = sessionName;
             Connection = new Connection(browser);

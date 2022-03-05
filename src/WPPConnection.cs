@@ -29,7 +29,7 @@ namespace WPPConnect
 
             Models.Token token = await client.Token();
 
-            SessionSave(client, token);
+            Console.WriteLine($"[{client.SessionName}:client] Authenticated");
 
             if (this.OnAuthAuthenticated != null)
                 OnAuthAuthenticated(client, token);
@@ -185,16 +185,14 @@ namespace WPPConnect
 
         private void BrowserClose(Models.Client client)
         {
-            Console.WriteLine($"[{client.SessionName}:browser] Closing Browser");
+            client.Connection.BrowserContext.Pages[0].CloseAsync();
+            client.Connection.BrowserContext.CloseAsync();
 
-            client.Connection.Browser.CloseAsync();
-
-            Console.WriteLine($"[{client.SessionName}:client] Closing Session");
+            Console.WriteLine($"[{client.SessionName}:browser] Closed");
 
             _Clients.Remove(client);
 
             Console.WriteLine($"[{client.SessionName}:client] Closed");
-            Console.WriteLine();
         }
 
         private void SessionStart()
@@ -204,19 +202,17 @@ namespace WPPConnect
                 Console.WriteLine($"[wa-js : Sessions Starting]");
                 Console.WriteLine();
 
-                Directory.CreateDirectory($"{AppDomain.CurrentDomain.BaseDirectory}\\{Config.SessionFolderName}");
+                string directory = $"{AppDomain.CurrentDomain.BaseDirectory}\\{Config.SessionFolderName}";
 
-                List<string> listSessionFiles = Directory.GetFiles($"{AppDomain.CurrentDomain.BaseDirectory}\\{Config.SessionFolderName}").ToList();
+                Directory.CreateDirectory(directory);
 
-                foreach (string fileSession in listSessionFiles)
+                List<string> listSessionFolders = Directory.GetDirectories(directory).ToList();
+
+                foreach (string sessionFolderPath in listSessionFolders)
                 {
-                    string jsonTxt = File.ReadAllText(fileSession);
+                    DirectoryInfo folder = new DirectoryInfo(sessionFolderPath);
 
-                    Models.Token token = JsonConvert.DeserializeObject<Models.Token>(jsonTxt);
-
-                    string sessionName = Path.GetFileName(fileSession).Replace(Path.GetExtension(fileSession), "");
-
-                    SessionCreate(sessionName, token).Wait();
+                    SessionCreate(folder.Name, true).Wait();
                 }
 
                 Console.WriteLine($"[wa-js : Sessions Started]");
@@ -224,29 +220,17 @@ namespace WPPConnect
             }
         }
 
-        private void SessionSave(Models.Client client, Models.Token token)
-        {
-            if (Config.TokenStore == Models.Enum.TokenStore.File && token != null)
-            {
-                string tokenJson = JsonConvert.SerializeObject(token);
-
-                Directory.CreateDirectory($"{AppDomain.CurrentDomain.BaseDirectory}\\{Config.SessionFolderName}");
-
-                File.WriteAllText($"{AppDomain.CurrentDomain.BaseDirectory}{Config.SessionFolderName}\\{client.SessionName}.json", tokenJson);
-            }
-        }
-
         private void SessionRemove(Models.Client client)
         {
             if (Config.TokenStore == Models.Enum.TokenStore.File)
-                File.Delete($"{AppDomain.CurrentDomain.BaseDirectory}\\{Config.SessionFolderName}\\{client.SessionName}.json");
+                Directory.Delete($"{AppDomain.CurrentDomain.BaseDirectory}\\{Config.SessionFolderName}\\{client.SessionName}", true);
         }
 
         #endregion
 
         #region Methods - Public
 
-        public async Task<Models.Client> SessionCreate(string sessionName, Models.Token? token = null)
+        public async Task SessionCreate(string sessionName, bool token = false)
         {
             try
             {
@@ -275,9 +259,16 @@ namespace WPPConnect
 
                     if (!string.IsNullOrEmpty(Config.BrowserWsUrl))
                     {
-                        IBrowser browser = await playwrightBrowser.ConnectAsync(Config.BrowserWsUrl);
+                        BrowserTypeConnectOverCDPOptions browserTypeConnectOptions = new BrowserTypeConnectOverCDPOptions()
+                        {
+                            Timeout = 5000
+                        };
 
-                        client = new Models.Client(sessionName, browser);
+                        IBrowser browser = await playwrightBrowser.ConnectOverCDPAsync(Config.BrowserWsUrl);
+
+                        IBrowserContext browserContext = browser.Contexts[0];
+
+                        client = new Models.Client(sessionName, browserContext);
                     }
                     else
                     {
@@ -358,53 +349,26 @@ namespace WPPConnect
                                   "--unhandled-rejections=strict",
                                   "--window-position=0,0" };
 
-                        BrowserTypeLaunchOptions launchOptions = new BrowserTypeLaunchOptions
+                        BrowserTypeLaunchPersistentContextOptions launchOptions = new BrowserTypeLaunchPersistentContextOptions
                         {
                             Args = Config.Headless == true ? args : new string[0],
                             Headless = Config.Headless,
                             Devtools = Config.Devtools,
-                            Channel = "chrome"
+                            Channel = "chrome",
+                            BypassCSP = true,
+                            UserAgent = "WhatsApp/2.2043.8 Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36"
                         };
 
-                        IBrowser browser = await playwrightBrowser.LaunchAsync(launchOptions);
+                        IBrowserContext browserContext = await playwrightBrowser.LaunchPersistentContextAsync($"{AppDomain.CurrentDomain.BaseDirectory}\\{Config.SessionFolderName}\\{sessionName}", launchOptions);
 
-                        client = new Models.Client(sessionName, browser);
-
-                        //BrowserTypeLaunchPersistentContextOptions launchOptions = new BrowserTypeLaunchPersistentContextOptions
-                        //{
-                        //    Args = Config.Headless == true ? args : new string[0],
-                        //    Headless = Config.Headless,
-                        //    Devtools = Config.Devtools,
-                        //    Channel = "chrome"
-                        //};
-
-                        //IBrowserContext browserContext = await playwrightBrowser.LaunchPersistentContextAsync(sessionName, launchOptions);
-
-                        //client = new Models.Client(sessionName, browserContext.Browser);
+                        client = new Models.Client(sessionName, browserContext);
                     }
-
-                    client.Connection.BrowserPage = await client.Connection.Browser.NewPageAsync(new BrowserNewPageOptions()
-                    {
-                        BypassCSP = true,
-                        UserAgent = "WhatsApp/2.2043.8 Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36"
-                    });
 
                     Console.WriteLine($"[{sessionName}:browser] Initialized");
 
                     Console.WriteLine($"[{client.SessionName}:client] Initializing");
 
                     await client.Connection.BrowserPage.GotoAsync("https://web.whatsapp.com");
-
-                    if (token != null)
-                    {
-                        await client.Connection.BrowserPage.EvaluateAsync("async => window.localStorage.clear()");
-                        await client.Connection.BrowserPage.EvaluateAsync($"async => localStorage.setItem('WABrowserId','{token.WABrowserId}')");
-                        await client.Connection.BrowserPage.EvaluateAsync($"async => localStorage.setItem('WASecretBundle','{token.WASecretBundle}')");
-                        await client.Connection.BrowserPage.EvaluateAsync($"async => localStorage.setItem('WAToken1','{token.WAToken1}')");
-                        await client.Connection.BrowserPage.EvaluateAsync($"async => localStorage.setItem('WAToken2','{token.WAToken2}')");
-
-                        await client.Connection.BrowserPage.GotoAsync("https://web.whatsapp.com");
-                    }
 
                     #region Inject
 
@@ -421,11 +385,15 @@ namespace WPPConnect
 
                     bool mainLoaded = await client.Connection.BrowserPage.EvaluateAsync<bool>("async => WPP.conn.isMainLoaded()");
 
-                    if (!mainLoaded && token != null)
+                    if (!mainLoaded && token)
                     {
+                        Console.WriteLine($"[{client.SessionName}:client] Authentication Failed");
+
                         BrowserClose(client);
 
-                        return await SessionCreate(client.SessionName);
+                        SessionRemove(client);
+
+                        return;
                     }
 
                     #region Events
@@ -457,20 +425,20 @@ namespace WPPConnect
                 else
                     throw new Exception($"Já existe uma session com o nome {sessionName}");
 
-                Console.WriteLine($"[{sessionName}:client] Initialized");
-                Console.WriteLine();
-
                 Models.Session session = await client.QrCode();
 
                 if (session.Status == Models.Enum.Status.QrCode)
                 {
+                    Console.WriteLine($"[{sessionName}:client] Authentication Required");
+
                     dynamic qrCodeJson = new JObject();
                     qrCodeJson.fullCode = session.Mensagem;
 
                     BrowserPage_OnAuthCodeChange(client.SessionName, qrCodeJson);
                 }
 
-                return client;
+                Console.WriteLine($"[{sessionName}:client] Initialized");
+                Console.WriteLine();
             }
             catch (Exception e)
             {

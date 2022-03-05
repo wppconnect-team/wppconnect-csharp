@@ -4,14 +4,14 @@ namespace WPPConnect.Models
 {
     public class Connection
     {
-        public IBrowser Browser { get; set; }
-
         public IPage BrowserPage { get; set; }
 
+        public IBrowserContext BrowserContext { get; set; }
 
-        public Connection(IBrowser browser)
+        public Connection(IBrowserContext browser)
         {
-            Browser = browser;
+            BrowserContext = browser;
+            BrowserPage = browser.Pages[0];
         }
     }
 }
