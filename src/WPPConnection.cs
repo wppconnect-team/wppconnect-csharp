@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RestSharp;
 using System.Dynamic;
+using System.Security.AccessControl;
 
 namespace WPPConnect
 {
@@ -383,9 +384,9 @@ namespace WPPConnect
 
                     #endregion
 
-                    bool mainLoaded = await client.Connection.BrowserPage.EvaluateAsync<bool>("async => WPP.conn.isMainLoaded()");
+                    bool isAuthenticated = await client.Connection.BrowserPage.EvaluateAsync<bool>("async => WPP.conn.isAuthenticated()");
 
-                    if (!mainLoaded && token)
+                    if (!isAuthenticated && token)
                     {
                         Console.WriteLine($"[{client.SessionName}:client] Authentication Failed");
 
