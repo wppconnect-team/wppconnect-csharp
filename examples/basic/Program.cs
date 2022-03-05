@@ -22,7 +22,7 @@ internal class Program
         wppConnect.OnAuthAuthenticated += WppConnect_OnAuthAuthenticated;
         wppConnect.OnAuthLogout += WppConnect_OnAuthLogout;
         
-        //WPPConnect.Models.Client clientCreate = await wppConnect.CreateSession("Teste");
+        //await wppConnect.SessionCreate("Teste");
 
         #region Client
 
@@ -52,7 +52,7 @@ internal class Program
 
     private static void WppConnect_OnAuthAuthenticated(WPPConnect.Models.Client client, WPPConnect.Models.Token token)
     {
-        Console.WriteLine($"[{client.SessionName}:login]");
+        
     }
 
     private static void WppConnect_OnAuthChange(WPPConnect.Models.Client client, string token)
