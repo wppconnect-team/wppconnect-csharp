@@ -102,7 +102,7 @@ namespace WPPConnect
                 {
                     Id = response.id.id,
                     Content = response.body,
-                    Number = response.from.Substring(0, response.from.IndexOf('@'))
+                    Recipient = response.from.Substring(0, response.from.IndexOf('@'))
                 };
 
                 OnMessageReceived(instance, messageObj);

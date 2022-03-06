@@ -92,7 +92,33 @@ namespace WPPConnect
                 {
                     await message.Validate(instance);
 
-                    await instance.Connection.BrowserPage.EvaluateAsync("async => WPP.chat.sendTextMessage('" + message.Number + "', '" + message.Content + "', { createChat: true })");
+                    switch (message.Type)
+                    {
+                        case Models.Enum.MessageType.Document:
+                            {
+                                string command = "async => WPP.chat.sendFileMessage('" + message.Recipient + "', '" + message.File.Base64 + "', { createChat: true, type: 'document', filename: '" + message.File.Name + "', caption: '" + message.Content + "' })";
+
+                                await instance.Connection.BrowserPage.EvaluateAsync(command);
+                             
+                                break;
+                            }
+                        case Models.Enum.MessageType.Image:
+                            {
+                                string command = "async => WPP.chat.sendFileMessage('" + message.Recipient + "', '" + message.File.Base64 + "', { createChat: true, type: 'image', filename: '" + message.File.Name + "', caption: '" + message.Content + "' })";
+
+                                await instance.Connection.BrowserPage.EvaluateAsync(command);
+
+                                break;
+                            }
+                        case Models.Enum.MessageType.Text:
+                            {
+                                string command = "async => WPP.chat.sendTextMessage('" + message.Recipient + "', '" + message.Content + "', { createChat: true })";
+
+                                await instance.Connection.BrowserPage.EvaluateAsync(command);
+
+                                break;
+                            }
+                    }
 
                     return true;
                 }

@@ -2,14 +2,6 @@
 {
     public static class Enum
     {
-        public enum Status
-        {
-            Connected,
-            Disconnected,
-            QrCode,
-            ERROR
-        }
-
         public enum Browser
         {
             Chromium,
@@ -20,6 +12,21 @@
         {
             Latest,
             Nightly
+        }
+
+        public enum Status
+        {
+            Connected,
+            Disconnected,
+            QrCode,
+            ERROR
+        }
+
+        public enum MessageType
+        {
+            Document,
+            Image,
+            Text
         }
     }
 }
