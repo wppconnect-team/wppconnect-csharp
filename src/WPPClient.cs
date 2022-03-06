@@ -90,14 +90,32 @@ namespace WPPConnect
 
                 if (session.Status == Models.Enum.Status.Connected)
                 {
-                    message.Validate();
+                    await message.Validate(instance);
 
-                    await instance.Connection.BrowserPage.EvaluateAsync("async => WPP.chat.sendTextMessage('" + message.Number + "@c.us', '" + message.Content + "', { createChat: true })");
+                    await instance.Connection.BrowserPage.EvaluateAsync("async => WPP.chat.sendTextMessage('" + message.Number + "', '" + message.Content + "', { createChat: true })");
 
                     return true;
                 }
 
                 throw new Exception("Você não está conectado a session");
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        public static async Task Testes(this Models.Instance instance)
+        {
+            try
+            {
+                Models.Session session = await Status(instance);
+
+                if (session.Status == Models.Enum.Status.Connected)
+                {
+                    var teste1 = await instance.Connection.BrowserPage.EvaluateAsync<object>("async => WPP.contact.queryExists('5564992015016@c.us')");
+                    var teste2 = await instance.Connection.BrowserPage.EvaluateAsync<object>("async => WPP.profile.getMyStatus()");
+                }
             }
             catch (Exception)
             {
