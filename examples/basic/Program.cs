@@ -22,7 +22,7 @@ internal class Program
         wppConnect.OnAuthAuthenticated += WppConnect_OnAuthAuthenticated;
         wppConnect.OnAuthLogout += WppConnect_OnAuthLogout;
         
-        //await wppConnect.SessionCreate("Teste");
+        await wppConnect.SessionCreate("Teste1");
 
         #region Client
 
@@ -50,14 +50,14 @@ internal class Program
         #endregion
     }
 
-    private static void WppConnect_OnAuthAuthenticated(WPPConnect.Models.Client client, WPPConnect.Models.Token token)
+    private static void WppConnect_OnAuthAuthenticated(WPPConnect.Models.Instance instance)
     {
         
     }
 
-    private static void WppConnect_OnAuthChange(WPPConnect.Models.Client client, string token)
+    private static void WppConnect_OnAuthChange(WPPConnect.Models.Instance instance, string token)
     {
-        Console.WriteLine($"[{client.SessionName}:connectionChange] {token}");
+        Console.WriteLine($"[{instance.Session.Name}:connectionChange] {token}");
 
         if (_Config.LogQrCode)
         {
@@ -72,13 +72,13 @@ internal class Program
         }
     }
 
-    private static void WppConnect_OnAuthLogout(WPPConnect.Models.Client client)
+    private static void WppConnect_OnAuthLogout(WPPConnect.Models.Instance instance)
     {
-        Console.WriteLine($"[{client.SessionName}:logout]");
+        
     }
 
-    private static void WppConnect_OnMessageReceived(WPPConnect.Models.Client client, WPPConnect.Models.Message message)
+    private static void WppConnect_OnMessageReceived(WPPConnect.Models.Instance instance, WPPConnect.Models.Message message)
     {
-        Console.WriteLine($"[{client.SessionName}:messageReceived] {message}");
+        
     }
 }

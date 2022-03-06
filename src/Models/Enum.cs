@@ -4,24 +4,16 @@
     {
         public enum Status
         {
-            Conectado,
-            Desconectado,
+            Connected,
+            Disconnected,
             QrCode,
-            Token,
             ERROR
-        }
-
-        public enum TokenStore
-        {
-            None,
-            File
         }
 
         public enum Browser
         {
             Chromium,
-            Firefox,
-            Webkit
+            Firefox
         }
 
         public enum LibVersion

@@ -4,137 +4,100 @@ namespace WPPConnect
 {
     public static class WPPClient
     {
-        public static async Task<Models.Session> Status(this Models.Client client)
+        public static async Task<Models.Session> Status(this Models.Instance instance)
         {
-            Models.Session session = new Models.Session(client);
-
             try
             {
-                bool authenticated = await client.Connection.BrowserPage.EvaluateAsync<bool>("async => WPP.conn.isAuthenticated()");
+                bool authenticated = await instance.Connection.BrowserPage.EvaluateAsync<bool>("async => WPP.conn.isAuthenticated()");
 
                 if (authenticated)
-                {
-                    session.Status = Models.Enum.Status.Conectado;
-
-                    return session;
-                }
+                    instance.Session.Status = Models.Enum.Status.Connected;
                 else
-                {
-                    session.Status = Models.Enum.Status.Desconectado;
+                    instance.Session.Status = Models.Enum.Status.Disconnected;
 
-                    return session;
-                }
+                return instance.Session;
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                session.Status = Models.Enum.Status.ERROR;
-                session.Mensagem = e.Message;
+                instance.Session.Status = Models.Enum.Status.ERROR;
 
-                return session;
+                return instance.Session;
             }
         }
 
-        public static async Task<Models.Session> QrCode(this Models.Client client)
+        public static async Task<Models.Session> QrCode(this Models.Instance instance)
         {
-            Models.Session session = await Status(client);
+            Models.Session session = await Status(instance);
 
             try
             {
-                if (session.Status == Models.Enum.Status.Desconectado)
+                if (session.Status == Models.Enum.Status.Disconnected)
                 {
-                    dynamic response = await client.Connection.BrowserPage.EvaluateAsync<System.Dynamic.ExpandoObject>("async => WPP.conn.getAuthCode()");
+                    dynamic response = await instance.Connection.BrowserPage.EvaluateAsync<System.Dynamic.ExpandoObject>("async => WPP.conn.getAuthCode()");
 
                     string fullCode = response.fullCode;
 
                     session.Status = Models.Enum.Status.QrCode;
-                    session.Mensagem = fullCode;
+                    session.QrCode = fullCode;
 
                     return session;
                 }
 
                 return session;
-            }
-            catch (Exception e)
-            {
-                session.Status = Models.Enum.Status.ERROR;
-                session.Mensagem = e.Message;
-
-                return session;
-            }
-        }
-
-        public static async Task<Models.Session> Logout(this Models.Client client)
-        {
-            Models.Session session = await Status(client);
-
-            try
-            {
-                if (session.Status == Models.Enum.Status.Conectado)
-                {
-                    bool logout = await client.Connection.BrowserPage.EvaluateAsync<bool>("async => WPP.conn.logout()");
-
-                    await Logout(client);
-
-                    session.Status = Models.Enum.Status.Desconectado;
-
-                    return session;
-                }
-
-                session.Status = Models.Enum.Status.Desconectado;
-
-                return session;
-            }
-            catch (Exception e)
-            {
-                session.Status = Models.Enum.Status.ERROR;
-                session.Mensagem = e.Message;
-
-                return session;
-            }
-        }
-
-        public static async Task<Models.Token> Token(this Models.Client client)
-        {
-            Models.Session session = await Status(client);
-
-            try
-            {
-                if (session.Status == Models.Enum.Status.Conectado)
-                {
-                    string waBrowserId = await client.Connection.BrowserPage.EvaluateAsync<string>($"async => localStorage.getItem('WABrowserId')");
-                    string waSecretBundle = await client.Connection.BrowserPage.EvaluateAsync<string>($"async => localStorage.getItem('WASecretBundle')");
-                    string waToken1 = await client.Connection.BrowserPage.EvaluateAsync<string>($"async => localStorage.getItem('WAToken1')");
-                    string waToken2 = await client.Connection.BrowserPage.EvaluateAsync<string>($"async => localStorage.getItem('WAToken2')");
-
-                    Models.Token token = new Models.Token(waToken1, waToken2, waSecretBundle, waBrowserId);
-
-                    return token;
-                }
-                else
-                    return null;
             }
             catch (Exception)
             {
-                throw new Exception("Ocorreu um erro ao obter o token");
+                session.Status = Models.Enum.Status.ERROR;
+
+                return session;
             }
         }
 
-        public static async Task<bool> SendMessage(this Models.Client client, Models.Message message)
+        public static async Task<Models.Session> Logout(this Models.Instance instance)
+        {
+            Models.Session session = await Status(instance);
+
+            try
+            {
+                if (session.Status == Models.Enum.Status.Connected)
+                {
+                    bool logout = await instance.Connection.BrowserPage.EvaluateAsync<bool>("async => WPP.conn.logout()");
+
+                    await Logout(instance);
+
+                    session.Status = Models.Enum.Status.Disconnected;
+
+                    return session;
+                }
+
+                session.Status = Models.Enum.Status.Disconnected;
+
+                return session;
+            }
+            catch (Exception)
+            {
+                session.Status = Models.Enum.Status.ERROR;
+
+                return session;
+            }
+        }
+
+        public static async Task<bool> SendMessage(this Models.Instance instance, Models.Message message)
         {
             try
             {
-                Models.Session session = await Status(client);
+                Models.Session session = await Status(instance);
 
-                if (session.Status == Models.Enum.Status.Conectado)
+                if (session.Status == Models.Enum.Status.Connected)
                 {
                     message.Validate();
 
-                    await client.Connection.BrowserPage.EvaluateAsync("async => WPP.chat.sendTextMessage('" + message.Number + "@c.us', '" + message.Content + "', { createChat: true })");
+                    await instance.Connection.BrowserPage.EvaluateAsync("async => WPP.chat.sendTextMessage('" + message.Number + "@c.us', '" + message.Content + "', { createChat: true })");
 
                     return true;
                 }
 
-                return false;
+                throw new Exception("Você não está conectado a session");
             }
             catch (Exception)
             {

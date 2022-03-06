@@ -2,15 +2,16 @@
 {
     public class Session
     {
-        public Models.Client Client { get; set; }
+        public string Name { get; set; }
 
         public Enum.Status Status { get; set; }
 
-        public string? Mensagem { get; set; }
+        public string QrCode { get; set; }
 
-        public Session(Models.Client client)
+        public Session(string name)
         {
-            Client = client;
+            Name = name;
+            Status = Enum.Status.QrCode;
         }
     }
 }
