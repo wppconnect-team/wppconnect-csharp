@@ -210,8 +210,10 @@ namespace WPPConnect
                 foreach (string sessionFolderPath in listSessionFolders)
                 {
                     DirectoryInfo folder = new DirectoryInfo(sessionFolderPath);
-
-                    SessionCreate(folder.Name, true).Wait();
+                    if (!Directory.Exists($"{directory}\\{folder.Name}"))
+                    {
+                        SessionCreate(folder.Name, true).Wait();
+                    }
                 }
 
                 Console.WriteLine($"[wa-js : Sessions Started]");
