@@ -141,6 +141,7 @@ namespace WPPConnect
                 {
                     var teste1 = await instance.Connection.BrowserPage.EvaluateAsync<object>("async => WPP.contact.queryExists('5564992015016@c.us')");
                     var teste2 = await instance.Connection.BrowserPage.EvaluateAsync<object>("async => WPP.profile.getMyStatus()");
+                    var teste3 = await instance.Connection.BrowserPage.EvaluateAsync<object>("async => WPP.whatsapp.ChatStore.toJSON()");
                 }
             }
             catch (Exception)

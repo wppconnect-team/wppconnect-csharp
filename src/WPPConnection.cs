@@ -234,7 +234,7 @@ namespace WPPConnect
         {
             try
             {
-                IPlaywright playwright = await Playwright.CreateAsync();
+                using IPlaywright playwright = await Playwright.CreateAsync();
 
                 IBrowserType playwrightBrowser = playwright.Chromium;
 
@@ -245,6 +245,9 @@ namespace WPPConnect
                         break;
                     case Models.Enum.Browser.Firefox:
                         playwrightBrowser = playwright.Firefox;
+                        break;
+                    case Models.Enum.Browser.Webkit:
+                        playwrightBrowser = playwright.Webkit;
                         break;
                 }
 

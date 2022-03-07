@@ -5,7 +5,8 @@
         public enum Browser
         {
             Chromium,
-            Firefox
+            Firefox,
+            Webkit
         }
 
         public enum LibVersion
