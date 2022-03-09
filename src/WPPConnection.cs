@@ -60,7 +60,7 @@ namespace WPPConnect
         {
             Models.Instance instance = await Instance(sessionName);
 
-            InstanceClose(instance);
+            await InstanceClose(instance);
 
             if (this.OnAuthLogout != null)
             {
@@ -212,10 +212,10 @@ namespace WPPConnect
             }
         }
 
-        private void InstanceClose(Models.Instance instance)
+        private async Task InstanceClose(Models.Instance instance)
         {
-            instance.Connection.BrowserContext.Pages[0].CloseAsync();
-            instance.Connection.BrowserContext.CloseAsync();
+            await instance.Connection.BrowserContext.Pages[0].CloseAsync();
+            await instance.Connection.BrowserContext.CloseAsync();
 
             Console.WriteLine($"[{instance.Session.Name}:browser] Closed");
 
@@ -389,7 +389,7 @@ namespace WPPConnect
                     {
                         Console.WriteLine($"[{instance.Session.Name}:client] Authentication Failed");
 
-                        InstanceClose(instance);
+                        await InstanceClose(instance);
 
                         return;
                     }

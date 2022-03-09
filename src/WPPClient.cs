@@ -143,8 +143,8 @@ namespace WPPConnect
                     //var teste2 = await instance.Connection.BrowserPage.EvaluateAsync<object>("async => WPP.profile.getMyStatus()");
                     //var teste3 = await instance.Connection.BrowserPage.EvaluateAsync<object>("async => WPP.whatsapp.ChatStore.toJSON()");
                     var teste4 = await instance.Connection.BrowserPage.EvaluateAsync<string>("WPP.chat.getMessages('556492015016@c.us', { count: 3 })");
-                    var teste5 = await instance.Connection.BrowserPage.EvaluateAsync<int>("([x, y]) => Promise.resolve(x * y)", new[] { 7, 8 });
-                    var teste6 = await instance.Connection.BrowserPage.EvaluateAsync<string>("(WPP.chat.getMessages('556492015016@c.us', { count: 3 })) => Promise.resolve(WPP.chat.getMessages('556492015016@c.us', { count: 3 }))", new[] { 7, 8 });
+                    var teste5 = await instance.Connection.BrowserPage.EvaluateAsync<object>("() => Promise.resolve(WPP.chat.getMessages('556492015016@c.us', { count: 3 }))");
+                    var teste6 = await instance.Connection.BrowserPage.EvaluateAsync<object>("Promise.resolve(WPP.chat.getMessages('556492015016@c.us', { count: 3 }))");
                 }
             }
             catch (Exception)
