@@ -234,7 +234,7 @@ namespace WPPConnect
         {
             try
             {
-                using IPlaywright playwright = await Playwright.CreateAsync();
+                IPlaywright playwright = await Playwright.CreateAsync();
 
                 IBrowserType playwrightBrowser = playwright.Chromium;
 

@@ -21,8 +21,13 @@ internal class Program
         wppConnect.OnAuthCodeChange += WppConnect_OnAuthChange;
         wppConnect.OnAuthAuthenticated += WppConnect_OnAuthAuthenticated;
         wppConnect.OnAuthLogout += WppConnect_OnAuthLogout;
+        wppConnect.OnMessageReceived += WppConnect_OnMessageReceived;
         
-        await wppConnect.SessionCreate("Teste1");
+        await wppConnect.SessionCreate("Teste");
+
+        WPPConnect.Models.Instance instance = await wppConnect.Instance("Teste");
+
+        await instance.Testes();
 
         #region Client
 
