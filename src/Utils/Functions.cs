@@ -2,7 +2,7 @@
 {
     public static class Functions
     {
-        internal async static Task<bool> Validate(this Models.Message message, Models.Instance instance)
+        internal async static Task<bool> ValidateMessage(this Models.Message message, Models.Instance instance)
         {
             //Recipient
             message.Recipient = message.Recipient.Replace("+", "");
@@ -26,6 +26,19 @@
                 //if (!Base64Valid(message.File.Base64))
                     //throw new Exception($"O conteúdo do arquivo não é válido");
             }
+
+            return true;
+        }
+
+        internal async static Task<bool> ValidateNumber(this string sender, Models.Instance instance)
+        {
+            //Recipient
+            sender = sender.Replace("+", "");
+
+            dynamic validateNumber = await instance.Connection.BrowserPage.EvaluateAsync<object>($"async => WPP.contact.queryExists('{sender}@c.us')");
+
+            if (validateNumber == null)
+                throw new Exception($"O número {sender} não é válido");
 
             return true;
         }

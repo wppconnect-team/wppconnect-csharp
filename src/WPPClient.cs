@@ -1,4 +1,5 @@
-﻿using WPPConnect.Utils;
+﻿using Newtonsoft.Json.Linq;
+using WPPConnect.Utils;
 
 namespace WPPConnect
 {
@@ -90,7 +91,7 @@ namespace WPPConnect
 
                 if (session.Status == Models.Enum.Status.Connected)
                 {
-                    await message.Validate(instance);
+                    await message.ValidateMessage(instance);
 
                     switch (message.Type)
                     {
@@ -99,7 +100,7 @@ namespace WPPConnect
                                 string command = "async => WPP.chat.sendFileMessage('" + message.Recipient + "', '" + message.File.Base64 + "', { createChat: true, type: 'document', filename: '" + message.File.Name + "', caption: '" + message.Content + "' })";
 
                                 await instance.Connection.BrowserPage.EvaluateAsync(command);
-                             
+
                                 break;
                             }
                         case Models.Enum.MessageType.Image:
@@ -131,6 +132,36 @@ namespace WPPConnect
             }
         }
 
+        private static async Task GetMessages(this Models.Instance instance, string sender, int quantidade)
+        {
+            try
+            {
+                Models.Session session = await Status(instance);
+
+                if (session.Status == Models.Enum.Status.Connected)
+                {
+                    await sender.ValidateNumber(instance);
+
+                    var messages = await instance.Connection.BrowserPage.EvaluateHandleAsync("WPP.chat.getMessages('" + sender + "@c.us', { count: " + quantidade + " }).then(messages => JSON.stringify(messages));");
+                    
+                    string messagesJSON = await messages.JsonValueAsync<string>();
+
+                    JArray messagesJArray = JArray.Parse(messagesJSON);
+
+                    foreach (dynamic item in messagesJArray)
+                    {
+                        string id = item.id.id;
+                    }
+                }
+
+                throw new Exception("Você não está conectado a session");
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
         public static async Task Testes(this Models.Instance instance)
         {
             try
@@ -139,12 +170,15 @@ namespace WPPConnect
 
                 if (session.Status == Models.Enum.Status.Connected)
                 {
-                    //var teste1 = await instance.Connection.BrowserPage.EvaluateAsync<object>("async => WPP.contact.queryExists('5564992015016@c.us')");
-                    //var teste2 = await instance.Connection.BrowserPage.EvaluateAsync<object>("async => WPP.profile.getMyStatus()");
-                    //var teste3 = await instance.Connection.BrowserPage.EvaluateAsync<object>("async => WPP.whatsapp.ChatStore.toJSON()");
-                    var teste4 = await instance.Connection.BrowserPage.EvaluateAsync<string>("WPP.chat.getMessages('556492015016@c.us', { count: 3 })");
-                    var teste5 = await instance.Connection.BrowserPage.EvaluateAsync<object>("() => Promise.resolve(WPP.chat.getMessages('556492015016@c.us', { count: 3 }))");
-                    var teste6 = await instance.Connection.BrowserPage.EvaluateAsync<object>("Promise.resolve(WPP.chat.getMessages('556492015016@c.us', { count: 3 }))");
+                    var teste6 = await instance.Connection.BrowserPage.EvaluateHandleAsync("WPP.chat.getMessages('556492015016@c.us', { count: 3 }).then(messages => JSON.stringify(messages));");
+                    string teste7 = await teste6.JsonValueAsync<string>();
+
+                    JArray json = JArray.Parse(teste7);
+
+                    foreach (dynamic item in json)
+                    {
+                        string amor = item.id.id;
+                    }
                 }
             }
             catch (Exception)
