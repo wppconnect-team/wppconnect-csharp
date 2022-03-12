@@ -12,7 +12,7 @@ internal class Program
         //Config
         _Config = new WPPConnect.Models.Config()
         {
-            Devtools = false,
+            Devtools = true,
             Headless = false,
             Version = WPPConnect.Models.Enum.LibVersion.Nightly
         };
@@ -24,11 +24,11 @@ internal class Program
         wppConnect.OnAuthLogout += WppConnect_OnAuthLogout;
         wppConnect.OnMessageReceived += WppConnect_OnMessageReceived;
         
-        //await wppConnect.SessionCreate("Teste");
+        await wppConnect.SessionCreate("Teste");
 
         WPPConnect.Models.Instance instance = await wppConnect.Instance("Teste");
 
-        await instance.Testes();
+        //await instance.Testes();
 
         #region Client
 
@@ -53,7 +53,9 @@ internal class Program
             _Quit = keyInfo.Modifiers == ConsoleModifiers.Control && keyInfo.Key == ConsoleKey.C;
 
             if (keyInfo.Key == ConsoleKey.T)
-                await instance.Testes();
+            {
+                //await instance.Testes();
+            }
         }
 
         #endregion

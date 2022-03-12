@@ -214,16 +214,26 @@ namespace WPPConnect
 
         private async Task InstanceClose(Models.Instance instance)
         {
-            await instance.Connection.BrowserContext.Pages[0].CloseAsync();
-            await instance.Connection.BrowserContext.CloseAsync();
+            try
+            {
+                await instance.Connection.BrowserContext.Pages[0].CloseAsync();
+                await instance.Connection.BrowserContext.CloseAsync();
 
-            Console.WriteLine($"[{instance.Session.Name}:browser] Closed");
+                Console.WriteLine($"[{instance.Session.Name}:browser] Closed");
 
-            _Instances.Remove(instance);
+                _Instances.Remove(instance);
 
-            Console.WriteLine($"[{instance.Session.Name}:session] Closed");
+                Console.WriteLine($"[{instance.Session.Name}:session] Closed");
 
-            Directory.Delete($"{AppDomain.CurrentDomain.BaseDirectory}\\{Config.SessionsFolderName}\\{instance.Session.Name}", true);
+                Directory.Delete($"{AppDomain.CurrentDomain.BaseDirectory}\\{Config.SessionsFolderName}\\{instance.Session.Name}", true);
+            }
+            catch (Exception e)
+            {
+                if (e.Message.Contains("Access denied"))
+                    return;
+                else
+                    throw;
+            }
         }
 
         #endregion

@@ -170,15 +170,24 @@ namespace WPPConnect
 
                 if (session.Status == Models.Enum.Status.Connected)
                 {
-                    var teste6 = await instance.Connection.BrowserPage.EvaluateHandleAsync("WPP.chat.getMessages('556492015016@c.us', { count: 3 }).then(messages => JSON.stringify(messages));");
-                    string teste7 = await teste6.JsonValueAsync<string>();
+                    await GetMessages(instance, "556492015016", 3);
 
-                    JArray json = JArray.Parse(teste7);
+                    var messages = await instance.Connection.BrowserPage.EvaluateHandleAsync("WPP.chat.getMessages('556492015016@c.us', { count: 3 }).then(messages => JSON.stringify(messages));");
 
-                    foreach (dynamic item in json)
+                    string messagesJSON = await messages.JsonValueAsync<string>();
+
+                    JArray messagesJArray = JArray.Parse(messagesJSON);
+
+                    foreach (dynamic item in messagesJArray)
                     {
-                        string amor = item.id.id;
+                        string id = item.id.id;
                     }
+
+                    var messages2 = await instance.Connection.BrowserPage.EvaluateHandleAsync("WPP.chat.getMessages('556492015016@c.us', { count: 3 }).then(messages => messages);");
+                    var messages3 = await messages2.JsonValueAsync<string>();
+
+                    var messages4 = await instance.Connection.BrowserPage.EvaluateHandleAsync("WPP.chat.getMessages('556492015016@c.us', { count: 3 });");
+                    var messages5 = await messages4.JsonValueAsync<string>();
                 }
             }
             catch (Exception)
